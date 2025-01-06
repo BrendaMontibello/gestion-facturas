@@ -3,182 +3,129 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
 import { createClient as supabase } from '../db/client/supabase-client';
-import { Factura, FacturasPorMes, NuevaFactura } from '../types';
-import { PaginationParams } from '../types/pagination';
+import { FacturadDelMes, FacturaMensual, NuevaFactura, NuevaFacturaLinea } from '../types/facturas';
 
-interface FacturaFilters extends PaginationParams {
-  userId?: string;
-  contract_id?: string;
-  startDate?: Date;
-  endDate?: Date;
-}
 
-export async function obtenerFacturasPaginadas(params: FacturaFilters) {
-  const {
-    page = 1,
-    pageSize = 10,
-    userId,
-    contract_id,
-    startDate,
-    endDate,
-  } = params;
-  const start = (page - 1) * pageSize;
-
-  let query = supabase()
-    .from("bills")
-    .select(
-      `
-      *,
-      contracts!inner(
-        id,
-        entidad,
-        users!inner(
-          id,
-          apellido,
-          nombre
-        )
-      )
-    `,
-      { count: "exact" }
-    );
-
-  if (userId) {
-    query = query.eq("contracts.users.id", userId);
-  }
-
-  if (contract_id) {
-    query = query.eq("contract_id", contract_id);
-  }
-
-  if (startDate) {
-    query = query.gte("fecha", startDate.toISOString());
-  }
-
-  if (endDate) {
-    query = query.lte("fecha", endDate.toISOString());
-  }
-
-  const { data, error, count } = await query
-    .range(start, start + pageSize - 1)
-    .order("fecha", { ascending: false });
-  console.log("🚀 ~ data:", data);
-
-  if (error) throw error;
-
-  return {
-    data: data.map((item: Factura) => ({
-      id: item.id,
-      nro_linea: item.nro_linea,
-      nombre: item.nombre.toLowerCase(),
-      apellido: item.apellido.toLowerCase(),
-      plan: item.plan,
-      monto_valor: item.monto_valor,
-      monto_servic: item.monto_servic,
-      monto_bonifi: item.monto_bonifi,
-      monto_llama: item.monto_llama,
-      monto_llamcd: item.monto_llamcd,
-      monto_roami: item.monto_roami,
-      monto_mens: item.monto_mens,
-      monto_datos: item.monto_datos,
-      monto_otros: item.monto_otros,
-      monto_total: item.monto_total,
-      impuestos: item.impuestos,
-      gestion_de: item.gestion_de,
-      total: item.total,
-      contract_id: item.contract_id,
-    })),
-    total: count ?? 0,
-    page,
-    pageSize,
-    totalPages: Math.ceil((count ?? 0) / pageSize),
-  };
-}
-
-export async function insertarFacturaPorContratoId(
-  contract_id: string,
-  factura: NuevaFactura,
-  fecha: Date
-): Promise<
-  Omit<
-    Factura,
-    "fecha" | "impuestos" | "gestion_de" | "total" | "legajo" | "cuota"
-  >
-> {
-  console.log("🚀 ~ factura:", factura);
+export async function obtenerFacturasDelMes(
+  month: number,
+  year: number
+): Promise<FacturadDelMes[]> {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0); // Last day of the month
 
   const { data, error } = await supabase()
-    .from("bills")
-    .insert({
-      nro_linea: factura.nro_linea,
-      nombre: factura.nombre.toLowerCase(),
-      apellido: factura.apellido.toLowerCase(),
-      plan: factura.plan,
-      monto_valor: factura.monto_valor,
-      monto_servic: factura.monto_servic,
-      monto_bonifi: factura.monto_bonifi,
-      monto_llama: factura.monto_llama,
-      monto_llamcd: factura.monto_llamcd,
-      monto_roami: factura.monto_roami,
-      monto_mens: factura.monto_mens,
-      monto_datos: factura.monto_datos,
-      monto_otros: factura.monto_otros,
-      monto_total: factura.monto_total,
-      contract_id: contract_id,
-      fecha,
-      impuestos: factura.impuestos,
-      gestion_de: factura.gestion_de,
-      total: factura.total,
-    })
-    .select()
-    .single();
+  .from("bills")
+  .select(
+      `
+      *,
+      bills_mensuales: bills_mensuales!inner(
+        fecha,
+        contracts: contracts!inner(
+          fecha_inicio,
+          entidad,
+          certificado,
+          users: users!inner(
+            legajo,
+            nombre,
+            apellido,
+            cuil
+          )
+        )
+      )
+    `
+    )
+    .gte("bills_mensuales.fecha", startDate.toISOString())
+    .lte("bills_mensuales.fecha", endDate.toISOString());
 
-  if (error) throw error;
-
-  return {
-    ...factura,
-    id: data.id,
-    contract_id: data.contract_id,
-  };
-}
-
-export async function insertarFacturaUsuarioBatch(facturas: NuevaFactura[], fecha: Date) {
-  for (const factura of facturas) {
-    try {
-      // First, find the user by apellido and nombre
-      const { data: user, error: userError } = await supabase()
-        .from("users")
-        .select("id")
-        .ilike("apellido", factura.apellido?.toLowerCase())
-        .ilike("nombre", factura.nombre?.toLowerCase())
-        .single();
-
-      if (userError || !user) {
-        console.warn(`No user found for ${factura.apellido} ${factura.nombre}. Skipping.`);
-        continue;
-      }
-
-      // Now find the latest contract for the user using user_id
-      const { data: contract, error: contractError } = await supabase()
-        .from("contracts")
-        .select("id")
-        .eq("user_id", user.id) // Use user.id to find the contract
-        .order("fecha_inicio", { ascending: false })
-        .limit(1)
-        .single();
-
-      console.log("🚀 ~ contract:", contract);
-      if (contractError || !contract) {
-        console.warn(`No contract found for ${factura.apellido} ${factura.nombre}. Skipping.`);
-        continue;
-      }
-
-      // Upload each factura to the found contract
-      await insertarFacturaPorContratoId(contract.id, factura, fecha);
-    } catch (error) {
-      console.error(`Error inserting facturas for ${factura.apellido} ${factura.nombre}:`, error);
-    }
+  if (error) {
+    console.error("Error fetching bills:", error);
+    throw error;
   }
 
+  return data.map((factura: FacturadDelMes) => {
+    const contractStartDate = new Date(factura.bills_mensuales.contracts.fecha_inicio);
+    const billDate = new Date(factura.bills_mensuales.fecha);
+    const cuota =
+      Math.floor(
+        (billDate.getFullYear() - contractStartDate.getFullYear()) * 12 +
+          billDate.getMonth() -
+          contractStartDate.getMonth()
+      ) + 1;
+
+    return {
+      ...factura,
+      cuota,
+    };
+  });
+}
+
+export async function obtenerFacturasMensualesPorContrato(
+  contractId: string
+): Promise<FacturaMensual[]> {
+  console.log("🚀 ~ contractId:", contractId)
+  const { data, error } = await supabase()
+  .from("bills_mensuales")
+  .select("*")
+  .eq("contract_id", contractId);
+  
+  console.log("🚀 ~ data:", data)
+  if (error) {
+    console.error("Error fetching bills:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function obtenerFacturasPorFacturaMensualId(
+facturaMensualId: string
+): Promise<FacturadDelMes[]> {
+console.log("🚀 ~ facturaMensualId:", facturaMensualId)
+
+  const { data, error } = await supabase()
+  .from("bills")
+  .select(
+     `
+      *,
+      bills_mensuales: bills_mensuales!inner(
+        fecha,
+        contracts: contracts!inner(
+          fecha_inicio,
+          entidad,
+          certificado,
+          users: users!inner(
+            legajo,
+            nombre,
+            apellido,
+            cuil
+          )
+          )
+          )
+          `
+        )
+        .eq("bills_mensuales.id", facturaMensualId)
+        console.log("🚀 ~ data:", data)
+        
+  if (error) {
+    console.error("Error fetching bills:", error);
+    throw error;
+  }
+
+  return data.map((factura: any) => {
+    const contractStartDate = new Date(factura.bills_mensuales.contracts.fecha_inicio);
+    const billDate = new Date(factura.bills_mensuales.fecha);
+    const cuota =
+      Math.floor(
+        (billDate.getFullYear() - contractStartDate.getFullYear()) * 12 +
+          billDate.getMonth() -
+          contractStartDate.getMonth()
+      ) + 1;
+
+    return {
+      ...factura,
+      cuota,
+    };
+  });
 }
 
 export async function insertarFacturasBatch(
@@ -191,20 +138,20 @@ export async function insertarFacturasBatch(
 
   // Group facturas by nombre and apellido
   const groupedFacturas = facturas.reduce((acc, factura) => {
-    const key = `${factura.nombre?.toLowerCase()} ${factura.apellido?.toLowerCase()}`;
+    const key = `${factura.nombre?.toLowerCase().trim()} ${factura.apellido?.toLowerCase().trim()}`;
     if (!acc[key]) {
       acc[key] = [];
     }
     acc[key].push(factura);
     return acc;
   }, {} as Record<string, NuevaFactura[]>);
-
+  
   for (const [key, userFacturas] of Object.entries(groupedFacturas)) {
     try {
       // First, find the user by apellido and nombre
       const { data: user, error: userError } = await supabase()
         .from("users")
-        .select("id")
+        .select("id, legajo")
         .ilike("apellido", userFacturas[0].apellido?.toLowerCase())
         .ilike("nombre", userFacturas[0].nombre?.toLowerCase())
         .single();
@@ -224,16 +171,37 @@ export async function insertarFacturasBatch(
         .limit(1)
         .single();
 
-      console.log("🚀 ~ contract:", contract);
       if (contractError || !contract) {
         console.warn(`No contract found for ${key}. Skipping.`);
         notUploadedCount += userFacturas.length;
         continue;
       }
 
+      let facturaMensualId: string;
+
+      const { data: facturaMensual, error: facturaMensualError } = await supabase()
+      .from("bills_mensuales")
+      .select("id")
+      .eq("contract_id", contract.id)
+      .eq("fecha", fecha.toISOString())
+      .single();
+
+      if (facturaMensualError && facturaMensualError.code !== 'PGRST116') {
+        console.warn(`factura mensual errorfound for ${key}. Skipping.`);
+        notUploadedCount += userFacturas.length;
+        continue;
+      };
+
+      if (!facturaMensual) {
+        facturaMensualId = await crearFacturaMensual(contract.id, fecha);
+      } else {
+        facturaMensualId = facturaMensual.id;
+      } 
+      console.log("🚀 ~ facturaMensualId:", facturaMensualId)
+
       // Upload each factura to the found contract
       for (const factura of userFacturas) {
-        await insertarFacturaPorContratoId(contract.id, factura, fecha);
+        await insertarFacturaPorFacturaMensualId(facturaMensualId, factura);
         uploadedCount++;
       }
     } catch (error) {
@@ -250,74 +218,48 @@ export async function insertarFacturasBatch(
   return { uploaded: uploadedCount, notUploaded: notUploadedCount };
 }
 
-export async function obtenerFacturasPorContrato(
-  contractId: string
-): Promise<Factura[]> {
+export async function crearFacturaMensual(contract_id: string, fecha: Date): Promise<string> {
   const { data, error } = await supabase()
-    .from("bills")
-    .select("*")
-    .eq("contract_id", contractId);
+    .from("bills_mensuales")
+    .insert({ contract_id, fecha })
+    .select()
+    .single();
 
-  if (error) {
-    console.error("Error fetching bills:", error);
-    throw error;
-  }
+    if (error) throw error;
 
-  return data;
+    return data.id;
 }
 
-export async function obtenerFacturasPorMes(
-  month: number,
-  year: number
-): Promise<FacturasPorMes[]> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);
-
+export async function insertarFacturaPorFacturaMensualId(facturaMensualId: string, factura: NuevaFacturaLinea) {
   const { data, error } = await supabase()
     .from("bills")
-    .select(
-      `
-      *,
-      contracts!inner(
-        fecha_inicio,
-        entidad,
-        certificado,
-        users!inner(
-          legajo,
-          nombre,
-          apellido,
-          cuil
-        )
-      )
-    `
-    )
-    .gte("fecha", startDate.toISOString())
-    .lte("fecha", endDate.toISOString());
+    .insert({    
+      nro_linea: factura.nro_linea,
+      plan: factura.plan,
+      monto_valor: factura.monto_valor,
+      monto_servic: factura.monto_servic,
+      monto_bonifi: factura.monto_bonifi,
+      monto_llama: factura.monto_llama,
+      monto_llamcd: factura.monto_llamcd,
+      monto_roami: factura.monto_roami,
+      monto_mens: factura.monto_mens,
+      monto_datos: factura.monto_datos,
+      monto_otros: factura.monto_otros,
+      monto_total: factura.monto_total,
+      impuestos: factura.impuestos,
+      gestion_de: factura.gestion_de,
+      total: factura.total, 
+      factura_mensual_id: facturaMensualId })
+    .select()
+    .single();
 
-  if (error) {
-    console.error("Error fetching bills:", error);
-    throw error;
-  }
+    if (error) throw error;
 
-  return data.map((factura: any) => {
-    const contractStartDate = new Date(factura.contracts.fecha_inicio);
-    const billDate = new Date(factura.fecha);
-    const cuota =
-      Math.floor(
-        (billDate.getFullYear() - contractStartDate.getFullYear()) * 12 +
-          billDate.getMonth() -
-          contractStartDate.getMonth()
-      ) + 1;
-
-    return {
-      ...factura,
-      cuota,
-    };
-  });
+    return data.id;
 }
 
 export async function downloadBillsInCsvFile(
-  facturas: FacturasPorMes[],
+  facturas: any[],
   month: number,
   year: number
 ) {
@@ -359,18 +301,18 @@ export async function downloadBillsInCsvFile(
 }
 
 export async function downloadBillsInExcelFile(
-  facturas: FacturasPorMes[],
+  facturas: FacturadDelMes[],
   month: number,
   year: number
 ) {
   const data = facturas.map((factura) => ({
-    Legajo: factura.contracts.users.legajo,
-    Cuil: factura.contracts.users.cuil,
-    Nombre: factura.nombre,
-    Apellido: factura.apellido,
+    Legajo: factura.bills_mensuales.contracts.users.legajo,
+    Cuil: factura.bills_mensuales.contracts.users.cuil,
+    Nombre: factura.bills_mensuales.contracts.users.nombre,
+    Apellido: factura.bills_mensuales.contracts.users.apellido,
     "Nro Linea": factura.nro_linea,
     Plan: factura.plan,
-    Fecha: factura.fecha,
+    Fecha: factura.bills_mensuales.fecha,
     Cuota: factura.cuota,
     "Monto Valor": factura.monto_valor,
     "Monto Servicio": factura.monto_servic,
@@ -394,13 +336,14 @@ export async function downloadBillsInExcelFile(
 }
 
 export async function downloadBillsInTxtFile(
-  facturas: FacturasPorMes[],
+  facturas: FacturadDelMes[],
   month: number,
   year: number
 ) {
+  console.log("🚀 ~ facturas:", facturas)
   const data = facturas
     .map((factura) => {
-      const fecha = new Date(factura.fecha);
+      const fecha = new Date(factura.bills_mensuales.fecha);
       const fechaAlta = `${fecha.getDate()}${fecha.getMonth()}${fecha.getFullYear()}`;
       const fechaFacturacion = new Date(`${year}-${month}-01`);
       const fechaFactura = `10${fechaFacturacion.getMonth()}${fechaFacturacion.getFullYear()}`;
@@ -409,9 +352,9 @@ export async function downloadBillsInTxtFile(
         fechaFacturacion.getFullYear() + 1
       }`;
       const newCuota = factura.cuota.toString().padStart(3, "0");
-      const newImporte = factura.monto_total.toString().padStart(13, "0");
+      const newImporte = (Math.round(factura.monto_total * 100)).toString().padStart(13, "0");
 
-      return `0000000000000000${fechaFactura}0000${factura.contracts.users.cuil}0000000000${newCuota}${newImporte}${fechaVencimiento}0000000000000000000000000000000000000000${factura.contracts.entidad}${newImporte}012${fechaAlta}0000000000000000001${fechaVencimientoPresentacion}${factura.contracts.certificado}00000000000000000000`;
+      return `0000000000000000${fechaFactura}0000${factura.bills_mensuales.contracts.users.cuil}0000000000${newCuota}${newImporte}${fechaVencimiento}0000000000000000000000000000000000000000${factura.bills_mensuales.contracts.entidad}${newImporte}012${fechaAlta}0000000000000000001${fechaVencimientoPresentacion}${factura.bills_mensuales.contracts.certificado}00000000000000000000`;
     })
     .join("\n");
 

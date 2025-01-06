@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
+// import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -17,29 +17,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { insertarFacturaUsuarioBatch } from "@/lib/services/factura.service";
-import { NuevaFactura } from "@/lib/types";
+
 import { capitalize } from "@/lib/utils";
 
 import { Button } from "../ui/button";
+import { NuevaFactura } from "@/lib/types/facturas";
 
 interface FacturasPreviewProps {
   facturas: NuevaFactura[];
   onConfirm: () => Promise<void>;
   isLoading: boolean;
-  fecha: Date;
+  // fecha: Date;
 }
 
 export function FacturasPreview({
   facturas,
   onConfirm,
   isLoading,
-  fecha,
+  // fecha,
 }: Readonly<FacturasPreviewProps>) {
   const [currentPage, setCurrentPage] = useState(1);
   const facturasPerPage = 50;
-  const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
-  const [loadingUsers, setLoadingUsers] = useState<Record<string, boolean>>({});
+  // const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
+  // const [loadingUsers, setLoadingUsers] = useState<Record<string, boolean>>({});
 
   // Group facturas by nombre
   const groupedFacturas = facturas
@@ -68,21 +68,21 @@ export function FacturasPreview({
     currentPage * facturasPerPage
   );
 
-  const handleUserUpload = async (
-    nombre: string,
-    userFacturas: NuevaFactura[]
-  ) => {
-    setLoadingUsers((prev) => ({ ...prev, [nombre]: true }));
-    try {
-      await insertarFacturaUsuarioBatch(userFacturas, fecha);
-      setErrorUsers((prev) => ({ ...prev, [nombre]: false }));
-    } catch (error) {
-      console.error(`Error uploading facturas for ${nombre}:`, error);
-      setErrorUsers((prev) => ({ ...prev, [nombre]: true }));
-    } finally {
-      setLoadingUsers((prev) => ({ ...prev, [nombre]: false }));
-    }
-  };
+  // const handleUserUpload = async (
+  //   nombre: string,
+  //   userFacturas: NuevaFactura[]
+  // ) => {
+  //   setLoadingUsers((prev) => ({ ...prev, [nombre]: true }));
+  //   try {
+  //     await insertarFacturaUsuarioBatch(userFacturas, fecha);
+  //     setErrorUsers((prev) => ({ ...prev, [nombre]: false }));
+  //   } catch (error) {
+  //     console.error(`Error uploading facturas for ${nombre}:`, error);
+  //     setErrorUsers((prev) => ({ ...prev, [nombre]: true }));
+  //   } finally {
+  //     setLoadingUsers((prev) => ({ ...prev, [nombre]: false }));
+  //   }
+  // };
 
   const handleConfirm = async () => {
     onConfirm();
@@ -96,9 +96,9 @@ export function FacturasPreview({
             <AccordionTrigger>
               <h3 className="text-lg font-semibold flex items-center">
                 {capitalize(nombre)}
-                {errorUsers[nombre] && (
+                {/* {errorUsers[nombre] && (
                   <AlertCircle className="ml-2 text-red-500" />
-                )}
+                )} */}
               </h3>
             </AccordionTrigger>
             <AccordionContent>
@@ -170,15 +170,16 @@ export function FacturasPreview({
                   ))}
                 </TableBody>
               </Table>
-              {errorUsers[nombre] && (
-                <Button
-                  onClick={() => handleUserUpload(nombre, userFacturas)}
-                  disabled={loadingUsers[nombre]}
-                  className="mt-2"
-                >
-                  Retry
-                </Button>
-              )}
+              {/* {errorUsers[nombre] && (
+                // <Button
+                //   onClick={() => handleUserUpload(nombre, userFacturas)}
+                //   disabled={loadingUsers[nombre]}
+                //   className="mt-2"
+                // >
+                //   Retry
+                // </Button>
+                <p className="text-red-500">Error al cargar las facturas</p>
+              )} */}
             </AccordionContent>
           </AccordionItem>
         ))}

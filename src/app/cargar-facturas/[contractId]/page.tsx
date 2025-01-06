@@ -1,14 +1,16 @@
 "use client";
 
+import { obtenerFacturasMensualesPorContrato } from '@/lib/services/factura.service';
+import { FacturaMensual } from '@/lib/types/facturas';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { obtenerFacturasPorContrato } from '@/lib/services/factura.service';
-import { Factura } from '@/lib/types';
+// import { obtenerFacturasPorContrato } from '@/lib/services/factura.service';
+// import { Factura } from '@/lib/types';
 
 export default function FacturasPage() {
   const { contractId } = useParams<{ contractId: string }>();
-  const [facturas, setFacturas] = useState<Factura[]>([]);
+  const [facturas, setFacturas] = useState<FacturaMensual[]>([]);
   console.log("🚀 ~ FacturasPage ~ facturas:", facturas);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +19,7 @@ export default function FacturasPage() {
       const fetchFacturas = async () => {
         setLoading(true);
         try {
-          const response = await obtenerFacturasPorContrato(contractId);
+          const response = await obtenerFacturasMensualesPorContrato(contractId);
           setFacturas(response);
         } catch (error) {
           console.error("Error fetching bills:", error);

@@ -1,8 +1,9 @@
 import { createClient as supabase } from '../db/client/supabase-client';
-import { Contrato, NuevoUsuario, Usuario } from '../types';
+import { Contrato } from '../types/contratos';
 import { PaginatedResponse, PaginationParams } from '../types/pagination';
+import { NuevoUsuario, Usuario } from '../types/users';
 
-export async function insertarUsuario(nuevoUsuario: NuevoUsuario, userType: "activo" | "jubilado" | "admin" | "aduana" | "other") {
+export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
   if (!nuevoUsuario.cuil) throw new Error("Cuil is required");
   
   // Check if the user already exists
@@ -25,7 +26,7 @@ export async function insertarUsuario(nuevoUsuario: NuevoUsuario, userType: "act
         cuil: nuevoUsuario.cuil,
         apellido: nuevoUsuario.apellido.toLowerCase(),
         nombre: nuevoUsuario.nombre.toLowerCase(),
-        userType: userType.toLowerCase(),
+        usertype: nuevoUsuario.userType.toLowerCase(),
       })
       .select()
       .single();

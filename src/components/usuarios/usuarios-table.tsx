@@ -10,9 +10,10 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
 import { obtenerUsuariosPaginados } from '@/lib/services/usuarios.service';
-import { Contrato, Usuario } from '@/lib/types';
 import { capitalize } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import { Contrato } from '@/lib/types/contratos';
+import { Usuario } from '@/lib/types/users';
 
 export function UsuariosTable() {
   const searchParams = useSearchParams();
@@ -89,7 +90,7 @@ export function UsuariosTable() {
               )}, ${capitalize(usuario.nombre?.toLowerCase() ?? "")}`}</TableCell>
               <TableCell>{usuario.cuil}</TableCell>
               <TableCell>
-                <Link href={`/contrato/${usuario.cuil}`}>
+                <Link href={`/contratos/${usuario.cuil}`}>
                   <Button>Ver contrato</Button>
                 </Link>
               </TableCell>

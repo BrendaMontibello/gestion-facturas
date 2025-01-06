@@ -7,11 +7,11 @@ import {
 import {
     downloadBillsInCsvFile, downloadBillsInExcelFile, downloadBillsInTxtFile
 } from '@/lib/services/factura.service';
-import { FacturasPorMes } from '@/lib/types';
+import { FacturadDelMes } from '@/lib/types/facturas';
 import { capitalize } from '@/lib/utils';
 
 interface FacturasTableProps {
-  facturas: FacturasPorMes[];
+  facturas: FacturadDelMes[];
   loading: boolean;
   month: number;
   year: number;
@@ -23,6 +23,7 @@ export function FacturasTable({
   month,
   year,
 }: Readonly<FacturasTableProps>) {
+  console.log("🚀 ~ facturas:", facturas)
   const handleDownload = (format: "excel" | "txt" | "csv") => {
     if (format === "excel") {
       downloadBillsInExcelFile(facturas, month, year);
@@ -68,12 +69,12 @@ export function FacturasTable({
         <TableBody>
           {facturas.map((factura) => (
             <TableRow key={factura.id}>
-              <TableCell className='text-center'>{factura.contracts.users.legajo}</TableCell>
+              <TableCell className='text-center'>{factura.bills_mensuales.contracts.users.legajo}</TableCell>
               <TableCell className='text-center'>
-                {capitalize(factura.contracts.users.nombre)}
+                {capitalize(factura.bills_mensuales.contracts.users.nombre)}
               </TableCell>
               <TableCell className='text-center'>
-                {capitalize(factura.contracts.users.apellido)}
+                {capitalize(factura.bills_mensuales.contracts.users.apellido)}
               </TableCell>
               <TableCell className='text-center'>{factura.cuota}</TableCell>
               <TableCell className='text-right'>${factura.monto_total.toLocaleString("es")}</TableCell>

@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { parsearCSVFacturas } from '@/lib/csv-parser';
 import { insertarFacturasBatch } from '@/lib/services/factura.service';
-import { NuevaFactura } from '@/lib/types';
 import { numbersToEnglish } from '@/lib/utils';
 
 import { MonthYearPicker } from '../ui/month-year-picker';
 import { FacturasPreview } from './facturas-preview';
+import { NuevaFactura } from '@/lib/types/facturas';
 
 export function UploadFacturas() {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +42,7 @@ export function UploadFacturas() {
         const taxes = parseFloat(
           (factura.monto_total * (numbersToEnglish(impuestos) / 100)).toFixed(2)
         );
-        const total = factura.monto_total + taxes + numbersToEnglish(gestionDe);
+        const total = parseFloat((factura.monto_total + taxes + numbersToEnglish(gestionDe)).toFixed(2));
         return {
           ...factura,
           fecha: fecha.toISOString(),
@@ -153,7 +153,7 @@ export function UploadFacturas() {
             facturas={facturas}
             onConfirm={handleConfirmUpload}
             isLoading={isLoading}
-            fecha={fecha}
+            // fecha={fecha}
           />
         )}
       </CardContent>

@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table';
-import { insertarContrato } from '@/lib/services/contrato.service';
+import { crearContrato } from '@/lib/services/contrato.service';
 import { insertarUsuario } from '@/lib/services/usuarios.service';
-import { NuevoUsuario } from '@/lib/types';
+
 import { capitalize, formatearFechaInicial } from '@/lib/utils';
+import { NuevoUsuario } from '@/lib/types/users';
 
 interface UsuariosPreviewProps {
   usuarios: NuevoUsuario[];
@@ -31,10 +32,8 @@ export function UsuariosPreview({
     try {
       for (const usuario of usuarios) {
         try {
-          const userType = usuario.userType || "other";
-
-          const user = await insertarUsuario(usuario, userType);
-          await insertarContrato(user.id, usuario);
+          const user = await insertarUsuario(usuario);
+          await crearContrato(user.id, usuario);
           errors[usuario.cuil] = false;
         } catch (error) {
           console.error(`Error uploading usuario for ${usuario.cuil}:`, error);
@@ -75,6 +74,8 @@ export function UsuariosPreview({
             <TableHead>Entidad</TableHead>
             <TableHead>Certificado</TableHead>
             <TableHead>Disponible</TableHead>
+            <TableHead>Ret Mensual</TableHead>
+            <TableHead>Estado</TableHead>
             <TableHead>Fecha</TableHead>
           </TableRow>
         </TableHeader>
@@ -84,7 +85,7 @@ export function UsuariosPreview({
             const invalidDate = isInvalidDate(usuario.fecha);
             const uploadError = errorUsers[usuario.cuil];
             const rowClass =
-              invalidCuil || invalidDate || uploadError ? "bg-red-100" : "";
+              invalidCuil || (invalidDate && usuario.userType === "activo") || uploadError ? "bg-red-100" : "";
 
             return (
               <TableRow key={usuario.cuil} className={rowClass}>
@@ -95,8 +96,10 @@ export function UsuariosPreview({
                 <TableCell>{usuario.entidad}</TableCell>
                 <TableCell>{usuario.certificado}</TableCell>
                 <TableCell>{usuario.disponible}</TableCell>
+                <TableCell>{usuario.ret_mens}</TableCell>
+                <TableCell>{usuario.userType}</TableCell>
                 <TableCell>
-                  {invalidDate
+                  {invalidDate && usuario.userType === "activo"
                     ? "Fecha inválida"
                     : formatearFechaInicial(usuario.fecha)}
                 </TableCell>

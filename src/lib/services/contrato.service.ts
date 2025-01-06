@@ -1,13 +1,16 @@
 import { addYears, isAfter } from 'date-fns';
 
 import { createClient as supabase } from '../db/client/supabase-client';
-import { Contrato, NuevoUsuario, Usuario } from '../types';
-import { formatearFechaInicial } from '../utils';
 
-export async function insertarContrato(
+import { formatearFechaInicial } from '../utils';
+import { Contrato } from '../types/contratos';
+import { NuevoUsuario, Usuario } from '../types/users';
+
+
+export async function crearContrato(
   usuarioId: string,
   nuevoUsuario: NuevoUsuario
-) {
+): Promise<Contrato> {
   const fechaFormateada = formatearFechaInicial(nuevoUsuario.fecha);
   const newDate = new Date(fechaFormateada);
   const fechaInicio = isNaN(newDate.getTime()) ? new Date() : newDate;
@@ -30,8 +33,18 @@ export async function insertarContrato(
     isAfter(new Date(latestContract.fecha_final), fechaInicio)
   ) {
     // If the latest contract is still valid, do nothing
-    return { contrato: latestContract as Contrato };
+    return latestContract as Contrato;
   } else {
+
+    let estado;
+    if (!fechaFinal) {
+      estado = "fuera de norma";
+    } else if (fechaFinal < new Date()) {
+      estado = "vencido";
+    } else {
+      estado = "activo";
+    };
+
     const contrato = {
       user_id: usuarioId,
       fecha_inicio: fechaInicio ?? undefined,
@@ -39,9 +52,9 @@ export async function insertarContrato(
       entidad: nuevoUsuario.entidad ?? undefined,
       certificado: nuevoUsuario.certificado ?? undefined,
       disponible: nuevoUsuario.disponible ?? undefined,
-      ret_mens: nuevoUsuario.retMens ?? undefined,
-      estado: !fechaFinal ? "fuera de norma" : fechaFinal < new Date() ? "vencido" : "activo",
-      tipo: nuevoUsuario.userType ?? "other",
+      ret_mens: nuevoUsuario.ret_mens ?? undefined,
+      estado,
+      tipo: nuevoUsuario.userType,
     };
 
     const { data, error } = await supabase()

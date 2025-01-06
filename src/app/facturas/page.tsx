@@ -6,21 +6,21 @@ import { Suspense, useEffect, useState } from 'react';
 import { FacturasTable } from '@/components/facturas/facturas-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MonthYearPicker } from '@/components/ui/month-year-picker';
-import { obtenerFacturasPorMes } from '@/lib/services/factura.service';
-import { FacturasPorMes } from '@/lib/types';
+import { obtenerFacturasDelMes } from '@/lib/services/factura.service';
+import { FacturadDelMes } from '@/lib/types/facturas';
 
 export default function FacturasPage() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const [facturas, setFacturas] = useState<FacturasPorMes[]>([]);
+  const [facturas, setFacturas] = useState<FacturadDelMes[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFacturas = async () => {
       setLoading(true);
       try {
-        const response = await obtenerFacturasPorMes(month, year);
+        const response = await obtenerFacturasDelMes(month, year);
         setFacturas(response);
       } catch (error) {
         console.error("Error fetching bills:", error);

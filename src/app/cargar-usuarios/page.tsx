@@ -8,7 +8,7 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { UsuariosPreview } from '@/components/usuarios/usuarios-preview';
 import { useToast } from '@/hooks/use-toast';
 import { parsearUsuariosCSV } from '@/lib/csv-parser';
-import { NuevoUsuario } from '@/lib/types';
+import { NuevoUsuario } from '@/lib/types/users';
 
 export default function CargarUsuarios() {
   const [isLoading, setIsLoading] = useState(false);

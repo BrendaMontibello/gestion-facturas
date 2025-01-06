@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Papa from 'papaparse';
 
-import { NuevaFactura, NuevoUsuario } from './types';
 import { numbersToEnglish } from './utils';
+import { FacturaCsv } from './types/csv';
+import { NuevoUsuario } from './types/users';
+import { NuevoDescuento } from './types/descuentos';
 
 export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
   return new Promise((resolve, reject) => {
@@ -18,11 +20,11 @@ export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
             fecha: row.fecha?.toString().trim().padStart(8, '0'),
             disponible:
               parseFloat(row.disponible?.toString().replace(",", ".")) || 0,
-            retMens: parseFloat(row.retMens?.toString().replace(",", ".")) || 0,
+            ret_mens: parseFloat(row.retMens?.toString().replace(",", ".")) || 0,
             nombre: row.nombre?.toString().trim(),
             apellido: row.apellido?.toString().trim(),
             observaciones: row.observaciones?.toString().trim(),
-            userType: row.estado?.toString().trim().toLowerCase(),
+            userType: row.estado?.toString().trim().toLowerCase() ?? "other",
           }));
         resolve(usuarios);
       },
@@ -52,7 +54,7 @@ export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
 export function parsearCSVFacturas(
   file: File
 ): Promise<
-  Omit<NuevaFactura, "fecha" | "impuestos" | "gestion_de" | "total">[]
+FacturaCsv[]
 > {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
@@ -112,6 +114,37 @@ export function parsearCSVFacturas(
         }
       },
       error: (error) => reject(error),
+    });
+  });
+}
+
+export async function procesarArchivoDescuentos(file: File): Promise<NuevoDescuento[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => {
+        const headerMap: { [key: string]: string } = {
+         codigo: "codigo",
+         nombre: "descripcion",
+        };
+        return headerMap[header] || header.toLowerCase();
+      },
+      complete: (results) => {
+        try {
+          const descuentos = results.data.map((row: any) => ({
+            codigo: row.codigo.padStart(2, '0'),
+            descripcion: row.descripcion,
+          }));
+         
+          resolve(descuentos);
+        } catch (error) {
+          reject(new Error(String(error)));
+        }
+      },
+      error: (error) => {
+        reject(error);
+      },
     });
   });
 }

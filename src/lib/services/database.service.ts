@@ -2,26 +2,14 @@ import { createClient as supabase } from "../db/client/supabase-client";
 
 export async function deleteAllData() {
   try {
-    const { error: userError } = await supabase()
-      .from("users")
-      .delete()
-      .neq("legajo", "");
-    const { error: billError } = await supabase()
-      .from("bills")
-      .delete()
-      .neq("nombre", "");
-    const { error: contractError } = await supabase()
-      .from("contracts")
-      .delete()
-      .neq("entidad", "");
-
-    if (userError || billError || contractError) {
-      console.log("🚀 ~ deleteAllData ~ userError:", userError);
-      console.log("🚀 ~ deleteAllData ~ billError:", billError);
-      console.log("🚀 ~ deleteAllData ~ contractError:", contractError);
-      throw userError ?? billError ?? contractError;
-    }
+    await deleteTable("users");
+    await deleteTable("bills_mensuales");
+    await deleteTable("bills");
+    await deleteTable("contracts");
+    await deleteTable("discounts");
+    await deleteTable("bill_discounts");
     return true;
+
   } catch (error) {
     console.error("Error deleting all data:", error);
     throw error;
@@ -29,12 +17,20 @@ export async function deleteAllData() {
 }
 
 export async function deleteTable(tableName: string) {
-  const filter =
-    tableName === "users"
-      ? "legajo"
-      : tableName === "bills"
-      ? "nombre"
-      : "entidad";
+  const filter = {
+    users: "legajo",
+    bills: "nombre",
+    bills_mensuales: "nombre",
+    contracts: "entidad",
+    discounts: "codigo",
+    bill_discounts: "codigo",
+  }[tableName];
+
+  if (!filter) {
+    console.error(`Invalid table name: ${tableName}`);
+    throw new Error(`Invalid table name: ${tableName}`);
+  }
+
   try {
     const { error } = await supabase().from(tableName).delete().neq(filter, "");
     if (error) throw error;

@@ -1,4 +1,4 @@
-import { FileDown, FileSpreadsheet, Receipt, Users } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Percent, Receipt, Users } from 'lucide-react';
 import Link from 'next/link';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,25 +85,25 @@ export default function Home() {
           </Card>
         </Link>
 
-        {/* <Link href="/descuentos">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Percent className="h-6 w-6" />
-                Gestionar Descuentos
-              </CardTitle>
-              <CardDescription>
-                Administrar descuentos para facturas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Crea y gestiona los códigos de descuento aplicables a las
-                facturas.
-              </p>
-            </CardContent>
-          </Card>
-        </Link> */}
+          <Link href="/descuentos">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Percent className="h-6 w-6" />
+                  Gestionar Descuentos
+                </CardTitle>
+                <CardDescription>
+                  Administrar descuentos para facturas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Crea y gestiona los códigos de descuento aplicables a las
+                  facturas.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
 
         <Link href="/resetear-db">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
