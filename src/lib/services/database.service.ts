@@ -2,12 +2,12 @@ import { createClient as supabase } from "../db/client/supabase-client";
 
 export async function deleteAllData() {
   try {
-    await deleteTable("users");
-    await deleteTable("bills_mensuales");
+    await deleteTable("extras");
+    await deleteTable("bill_extras");
     await deleteTable("bills");
+    await deleteTable("bills_mensuales");
     await deleteTable("contracts");
-    await deleteTable("discounts");
-    await deleteTable("bill_discounts");
+    await deleteTable("users");
     return true;
 
   } catch (error) {
@@ -19,11 +19,11 @@ export async function deleteAllData() {
 export async function deleteTable(tableName: string) {
   const filter = {
     users: "legajo",
-    bills: "nombre",
-    bills_mensuales: "nombre",
+    bills: "nro_linea",
+    bills_mensuales: "fecha",
     contracts: "entidad",
-    discounts: "codigo",
-    bill_discounts: "codigo",
+    extras: "codigo",
+    bill_extras: "codigo",
   }[tableName];
 
   if (!filter) {
@@ -32,7 +32,12 @@ export async function deleteTable(tableName: string) {
   }
 
   try {
-    const { error } = await supabase().from(tableName).delete().neq(filter, "");
+    const isUuidColumn = tableName === "bills_mensuales"; // Extend for other UUID columns as needed
+
+    const { error } = await supabase()
+      .from(tableName)
+      .delete()
+      .neq(filter, isUuidColumn ? new Date(1970, 0, 1).toISOString() : "");
     if (error) throw error;
     return true;
   } catch (error) {

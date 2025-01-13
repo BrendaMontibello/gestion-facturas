@@ -1,5 +1,3 @@
-"use client";
-
 import { UploadFacturas } from '@/components/facturas/upload-facturas';
 
 export default function CargarFacturasPage() {

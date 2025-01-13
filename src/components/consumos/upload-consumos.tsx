@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { procesarArchivoDescuentos } from '@/lib/csv-parser';
-import { crearDescuentos } from '@/lib/services/descuentos.service';
+import { procesarArchivoConsumoExtra } from '@/lib/csv-parser';
 import { FileUpload } from '../ui/file-upload';
+import { crearConsumosExtra } from '@/lib/services/consumos.service';
 
 
 
-export function UploadDescuentos() {
+export function UploadConsumos() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -29,18 +29,18 @@ export function UploadDescuentos() {
 
     setIsLoading(true);
     try {
-      const descuentos = await procesarArchivoDescuentos(file);
-      const descuentosCreados = await crearDescuentos(descuentos);
+      const extras = await procesarArchivoConsumoExtra(file);
+      const extrasCreados = await crearConsumosExtra(extras);
       toast({
         title: "Éxito",
-        description: `Se han cargado ${descuentosCreados.length} descuentos`,
+        description: `Se han cargado ${extrasCreados.length} consumos extras`,
       });
       router.refresh();
     } catch (error) {
-      console.error('Error uploading discounts:', error);
+      console.error('Error uploading extras:', error);
       toast({
         title: "Error",
-        description: "Hubo un error al cargar los descuentos",
+        description: "Hubo un error al cargar los extras",
         variant: "destructive",
       });
     } finally {

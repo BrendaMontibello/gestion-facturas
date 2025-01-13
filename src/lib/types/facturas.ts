@@ -1,9 +1,10 @@
 import { Contrato } from "./contratos";
+import { ConsumoExtraAplicado } from "./consumos";
 import { Usuario } from "./users";
 
 export type NuevaFactura = {
-    nombre: string;
-    apellido: string;
+    legajo: string;
+    nombre?: string;
     nro_linea: number;
     plan: string;
     monto_valor: number;
@@ -27,6 +28,7 @@ export type NuevaFactura = {
     contract_id: string;
     cuota: number;
     fecha: string;
+    extras?: ConsumoExtraAplicado[];
   };
   
   export type NuevaFacturaMensual = Omit<FacturaMensual, "id" >;
@@ -55,9 +57,22 @@ export type NuevaFactura = {
 
   export type FacturadDelMes = FacturaLinea & {
     cuota: number;
+    totalExtras: number;
+    totalConExtras: number;
     bills_mensuales: FacturaMensual & {
+      extras?: ConsumoExtraAplicado[];
       contracts: Contrato & {
         users: Usuario;
       };
+    };
+  }
+
+  export type FacturaCompleta = {
+    id: string;
+    fecha: string;
+    bills: FacturaLinea[];
+    extras?: {monto: number, extras: {descripcion: string}}[];
+    contracts: Contrato & {
+      users: Usuario;
     };
   }

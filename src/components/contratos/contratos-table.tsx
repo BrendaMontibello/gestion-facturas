@@ -1,7 +1,5 @@
-"use client";
-
 import { format } from 'date-fns';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -29,6 +27,7 @@ export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }
             <TableHead>Tipo</TableHead>
             <TableHead>Entidad</TableHead>
             <TableHead>Certificado</TableHead>
+            <TableHead>Acciones</TableHead>
             <TableHead>Facturas</TableHead>
           </TableRow>
         </TableHeader>
@@ -49,6 +48,15 @@ export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }
               </TableCell>
               <TableCell>{contrato.entidad}</TableCell>
               <TableCell>{contrato.certificado}</TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <Link href={`/contratos/editar/${contrato.id}`}>
+                    <Button variant="ghost" size="icon">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </TableCell>
               <TableCell>
                 <Link href={`/facturas-mensuales/${contrato.id}`}>
                   <Button variant="ghost" size="icon">

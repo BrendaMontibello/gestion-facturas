@@ -12,64 +12,64 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Descuento } from '@/lib/types/descuentos';
-import { actualizarDescuento, eliminarDescuento } from '@/lib/services/descuentos.service';
+import { ConsumoExtra } from '@/lib/types/consumos';
+import { actualizarConsumoExtra, eliminarConsumoExtra } from '@/lib/services/consumos.service';
 import { useToast } from '@/hooks/use-toast';
 
-export function DescuentosTable({ 
-  descuentosIniciales 
+export function ConsumoExtraTable({ 
+  extrasIniciales 
 }: Readonly<{ 
-  descuentosIniciales: Descuento[] 
+  extrasIniciales: ConsumoExtra[] 
 }>) {
-  const [descuentos, setDescuentos] = useState(descuentosIniciales);
+  const [extras, setExtras] = useState(extrasIniciales);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const { toast } = useToast();
 
-  const handleEdit = (descuento: Descuento) => {
-    setEditingId(descuento.id);
-    setEditValue(descuento.descripcion);
+  const handleEdit = (extra: ConsumoExtra) => {
+    setEditingId(extra.id);
+    setEditValue(extra.descripcion);
   };
 
-  const handleSave = async (descuento: Descuento) => {
+  const handleSave = async (extra: ConsumoExtra) => {
     try {
-      const updatedDescuento = await actualizarDescuento(descuento.id, {
-        ...descuento,
+      const updatedExtra = await actualizarConsumoExtra(extra.id, {
+        ...extra,
         descripcion: editValue,
       });
 
-      setDescuentos(descuentos.map(d => 
-        d.id === descuento.id ? updatedDescuento : d
+      setExtras(extras.map(e => 
+        e.id === extra.id ? updatedExtra : e
       ));
       
       setEditingId(null);
       toast({
         title: "Éxito",
-        description: "Descuento actualizado correctamente",
+        description: "Extra actualizado correctamente",
       });
     } catch (error) {
-      console.error('Error updating discount:', error);
+      console.error('Error updating extra:', error);
       toast({
         title: "Error",
-        description: "Error al actualizar el descuento",
+        description: "Error al actualizar el extra",
         variant: "destructive",
       });
     }
   };
 
-  const handleDelete = async (descuento: Descuento) => {
+  const handleDelete = async (extra: ConsumoExtra) => {
     try {
-      await eliminarDescuento(descuento.id);
-      setDescuentos(descuentos.filter(d => d.id !== descuento.id));
+      await eliminarConsumoExtra(extra.id);
+      setExtras(extras.filter(e => e.id !== extra.id));
       toast({
         title: "Éxito",
-        description: "Descuento eliminado correctamente",
+        description: "Extra eliminado correctamente",
       });
     } catch (error) {
-      console.error('Error deleting descuento:', error);
+      console.error('Error deleting extra:', error);
       toast({
         title: "Error",
-        description: "Error al eliminar el descuento",
+        description: "Error al eliminar el extra",
         variant: "destructive",
       });
     }
@@ -90,34 +90,34 @@ export function DescuentosTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {descuentos.map((descuento) => (
-          <TableRow key={descuento.id}>
-            <TableCell>{descuento.codigo}</TableCell>
+        {extras.map((extra) => (
+          <TableRow key={extra.id}>
+            <TableCell>{extra.codigo}</TableCell>
             <TableCell>
-              {editingId === descuento.id ? (
+              {editingId === extra.id ? (
                 <Input
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   className="max-w-sm"
                 />
               ) : (
-                descuento.descripcion
+                extra.descripcion
               )}
             </TableCell>
             <TableCell>
-              {editingId === descuento.id ? (
+              {editingId === extra.id ? (
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleSave(descuento)}
+                    onClick={() => handleSave(extra)}
                   >
                     <Save className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(descuento)}
+                    onClick={() => handleDelete(extra)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -133,7 +133,7 @@ export function DescuentosTable({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleEdit(descuento)}
+                  onClick={() => handleEdit(extra)}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

@@ -90,8 +90,8 @@ export function UsuariosTable() {
               )}, ${capitalize(usuario.nombre?.toLowerCase() ?? "")}`}</TableCell>
               <TableCell>{usuario.cuil}</TableCell>
               <TableCell>
-                <Link href={`/contratos/${usuario.cuil}`}>
-                  <Button>Ver contrato</Button>
+                <Link href={`/contratos/${usuario.id}`}>
+                  <Button>Ver contratos</Button>
                 </Link>
               </TableCell>
               <TableCell>
@@ -121,7 +121,7 @@ export function UsuariosTable() {
                 )}
               </TableCell>
               <TableCell>
-                <Link href={`/usuarios/${usuario.cuil}`}>
+                <Link href={`/usuarios/${usuario.id}`}>
                   <Button variant="ghost" size="icon">
                     <Pencil className="h-4 w-4" />
                   </Button>

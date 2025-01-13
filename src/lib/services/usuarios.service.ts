@@ -4,14 +4,15 @@ import { PaginatedResponse, PaginationParams } from '../types/pagination';
 import { NuevoUsuario, Usuario } from '../types/users';
 
 export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
-  if (!nuevoUsuario.cuil) throw new Error("Cuil is required");
+  if (!nuevoUsuario.legajo) throw new Error("Legajo is required");
   
   // Check if the user already exists
   const { data: existingUser, error: userCheckError } = await supabase()
     .from("users")
     .select("*")
-    .eq("cuil", nuevoUsuario.cuil)
-    .single();
+    .eq("legajo", nuevoUsuario.legajo)
+    .maybeSingle();
+
 
   if (userCheckError && userCheckError.code !== "PGRST116")
     throw userCheckError;
@@ -29,12 +30,12 @@ export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
         usertype: nuevoUsuario.userType.toLowerCase(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (userError) throw userError;
     usuario = newUser as Usuario;
   } else {
-    usuario = await actualizarUsuario(nuevoUsuario.cuil, nuevoUsuario);
+    usuario = existingUser;
   }
 
   return usuario;
@@ -98,19 +99,36 @@ export async function obtenerUsuariosPaginados(
   };
 }
 
-export async function obtenerUsuarioPorCuil(cuil: string) {
+export async function obtenerUsuarioPorLegajo(legajo: string) {
   try {
     const { data, error } = await supabase()
       .from("users")
       .select("*")
-      .eq("cuil", cuil)
-      .single();
+      .eq("legajo", legajo)
+      .maybeSingle();
 
-    if (error) throw error;
+
+    if (error) return null;
     return data as Usuario;
   } catch (error) {
     console.error("Error al obtener usuario:", error);
-    throw error;
+    return null;
+  }
+}
+
+export async function obtenerUsuarioPorId(id: string) {
+  try {
+    const { data, error } = await supabase()
+      .from("users")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) return null;
+    return data as Usuario;
+  } catch (error) {
+    console.error("Error al obtener usuario:", error);
+    return null;
   }
 }
 
@@ -131,10 +149,10 @@ export async function actualizarUsuario(
       })
       .eq("cuil", cuil)
       .select()
-      .single();
+
 
     if (error) throw error;
-    return data as Usuario;
+    return data[0] as Usuario;
   } catch (error) {
     console.error("Error al actualizar usuario:", error);
     throw error;

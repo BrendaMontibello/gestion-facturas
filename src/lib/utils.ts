@@ -51,11 +51,15 @@ export function formatearMonto(monto: number): string {
 
 export function numbersToEnglish(number: string): number {
   // Replace the dot with an empty string and the comma with a dot
-  const normalizedNumber = number.replace(/\./g, "").replace(",", ".");
+  const normalizedNumber = number?.replace(/\./g, "").replace(",", ".");
   const parsedNumber = normalizedNumber
-    ? parseFloat(normalizedNumber).toFixed(2)
-    : "0";
-  return parseFloat(parsedNumber);
+    ? parseFloat(normalizedNumber)
+    : 0;
+  return numberToTwoDecimal(parsedNumber);
+}
+
+export function numberToTwoDecimal(number?: number): number {
+  return number ? Math.round(number * 100) / 100 : 0;
 }
 
 export function capitalize(value: string): string {

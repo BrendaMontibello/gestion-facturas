@@ -12,9 +12,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { actualizarUsuario } from '@/lib/services/usuarios.service';
-import { Usuario } from '@/lib/types';
 import { zodResolver } from '@hookform/resolvers/zod';
-
+import { Usuario } from '@/lib/types/users';
 const usuarioSchema = z.object({
   legajo: z.string().min(1, "El legajo es requerido"),
   cuil: z.string().min(1, "El CUIL es requerido"),

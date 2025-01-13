@@ -32,13 +32,14 @@ export function parsearFecha(fechaStr: string): string {
 export function formatearFechaParaMostrar(fecha: string): string {
   const date = new Date(fecha);
   if (!fecha) return "";
-  const dia = date.getDay();
-  const mes = date.getMonth();
+  const dia = date.getDate() + 1;
+  const mes = date.getMonth() + 1;
   const año = date.getFullYear();
-  return `${dia}/${mes}/${año}`;
+  return `${dia.toString().padStart(2, "0")}/${mes.toString().padStart(2, "0")}/${año}`;
 }
 
 export function calcularCuotaActual(fechaInicio: string): number {
+  if (!fechaInicio) return 0;
   const inicio = new Date(fechaInicio);
   const hoy = new Date();
   const diferenciaMeses =
