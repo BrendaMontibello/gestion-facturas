@@ -1,11 +1,11 @@
-import { Plus, Users } from 'lucide-react';
-import { Suspense } from 'react';
-import Link from 'next/link';
+import { Plus, Users } from "lucide-react";
+import { Suspense } from "react";
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UsuariosFilter } from '@/components/usuarios/usuarios-filter';
-import { UsuariosTable } from '@/components/usuarios/usuarios-table';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UsuariosFilter } from "@/components/usuarios/usuarios-filter";
+import { UsuariosTable } from "@/components/usuarios/usuarios-table";
 
 export default function UsuariosPage() {
   return (
@@ -24,7 +24,9 @@ export default function UsuariosPage() {
           </Link>
         </CardHeader>
         <CardContent>
-          <UsuariosFilter />
+          <Suspense fallback={<div>Cargando...</div>}>
+            <UsuariosFilter />
+          </Suspense>
           <Suspense fallback={<div>Cargando...</div>}>
             <UsuariosTable />
           </Suspense>

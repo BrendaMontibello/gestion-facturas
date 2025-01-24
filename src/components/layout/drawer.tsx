@@ -1,13 +1,18 @@
 "use client";
 
-import { FileSpreadsheet, Home, Receipt, Users } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { FileSpreadsheet, Home, Receipt, Users } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
-import { useDrawer } from '@/hooks/use-drawer';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useDrawer } from "@/hooks/use-drawer";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { href: "/", icon: Home, label: "Inicio" },
@@ -25,8 +30,10 @@ export function NavigationDrawer() {
   return (
     <Sheet open={isOpen} onOpenChange={closeDrawer}>
       <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-        <SheetTitle>Hola</SheetTitle>
-        <SheetDescription>NavBar</SheetDescription>
+        <SheetTitle>Sistema de Gestión de Cuentas</SheetTitle>
+        <SheetDescription>
+          Sistema para la gestión de cuentas empresariales
+        </SheetDescription>
         <nav className="flex flex-col gap-2 mt-4">
           {menuItems.map(({ href, icon: Icon, label }) => (
             <Link key={href} href={href} onClick={closeDrawer}>

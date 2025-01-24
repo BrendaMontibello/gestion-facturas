@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Papa from 'papaparse';
+import Papa from "papaparse";
 
-import { numbersToEnglish, numberToTwoDecimal } from './utils';
-import { FacturaCsv } from './types/csv';
-import { NuevoUsuario, UserType } from './types/users';
-import { NuevoConsumoExtraAAplicar, NuevoConsumoExtra } from './types/consumos';
+import { numbersToEnglish, numberToTwoDecimal } from "./utils";
+import { FacturaCsv } from "./types/csv";
+import { NuevoUsuario, UserType } from "./types/users";
+import { NuevoConsumoExtraAAplicar, NuevoConsumoExtra } from "./types/consumos";
 
 export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
   return new Promise((resolve, reject) => {
@@ -17,13 +17,16 @@ export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
             cuil: row.cuil?.toString().trim() || "",
             certificado: row.certificado?.toString().trim() || "",
             entidad: row.entidad?.toString().trim() || "",
-            fecha: row.fecha?.toString().trim().padStart(8, '0'),
+            fecha: row.fecha?.toString().trim().padStart(8, "0"),
             disponible:
               parseFloat(row.disponible?.toString().replace(",", ".")) || 0,
-            rem_mens: parseFloat(row.rem_mens?.toString().replace(",", ".")) || 0,
+            rem_mens:
+              parseFloat(row.rem_mens?.toString().replace(",", ".")) || 0,
             nombre: row.nombre?.toString().trim(),
             apellido: row.apellido?.toString().trim(),
-            userType: row.userType?.toString().trim().toLowerCase() as UserType ?? "other",
+            userType:
+              (row.userType?.toString().trim().toLowerCase() as UserType) ??
+              "other",
           }));
         resolve(usuarios);
       },
@@ -50,11 +53,7 @@ export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
   });
 }
 
-export function parsearCSVFacturas(
-  file: File
-): Promise<
-FacturaCsv[]
-> {
+export function parsearCSVFacturas(file: File): Promise<FacturaCsv[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -99,7 +98,6 @@ FacturaCsv[]
                 monto_total: numbersToEnglish(row.monto_total),
               };
             });
-          console.log("🚀 ~ file: csv-parser.ts:102 ~ Papa.parse ~ facturas:", facturas.length)
           resolve(facturas);
         } catch (error) {
           reject(new Error(String(error)));
@@ -110,25 +108,27 @@ FacturaCsv[]
   });
 }
 
-export async function procesarArchivoConsumoExtra(file: File): Promise<NuevoConsumoExtra[]> {
+export async function procesarArchivoConsumoExtra(
+  file: File
+): Promise<NuevoConsumoExtra[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) => {
         const headerMap: { [key: string]: string } = {
-         codigo: "codigo",
-         nombre: "descripcion",
+          codigo: "codigo",
+          nombre: "descripcion",
         };
         return headerMap[header] || header.toLowerCase();
       },
       complete: (results) => {
         try {
           const descuentos = results.data.map((row: any) => ({
-            codigo: row.codigo.padStart(2, '0'),
+            codigo: row.codigo.padStart(2, "0"),
             descripcion: row.descripcion,
           }));
-         
+
           resolve(descuentos);
         } catch (error) {
           reject(new Error(String(error)));
@@ -141,26 +141,32 @@ export async function procesarArchivoConsumoExtra(file: File): Promise<NuevoCons
   });
 }
 
-export async function procesarArchivoConsumoExtraAplicar(file: File): Promise<NuevoConsumoExtraAAplicar[]> {
+export async function procesarArchivoConsumoExtraAplicar(
+  file: File
+): Promise<NuevoConsumoExtraAAplicar[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) => {
         const headerMap: { [key: string]: string } = {
-         legajo: "legajo",
-         codigo: "codigo",
-         monto: "monto",
+          legajo: "legajo",
+          codigo: "codigo",
+          monto: "monto",
         };
         return headerMap[header] || header.toLowerCase();
       },
-      complete: (results: { data: { legajo: string; codigo: string; monto: string }[] }) => {
+      complete: (results: {
+        data: { legajo: string; codigo: string; monto: string }[];
+      }) => {
         try {
-          const descuentos = results.data.map((row: { legajo: string; codigo: string; monto: string }) => ({
-            legajo: row.legajo,
-            codigo: row.codigo?.padStart(2, '0'),
-            monto: numberToTwoDecimal(numbersToEnglish(row.monto)),
-          }));
+          const descuentos = results.data.map(
+            (row: { legajo: string; codigo: string; monto: string }) => ({
+              legajo: row.legajo,
+              codigo: row.codigo?.padStart(2, "0"),
+              monto: numberToTwoDecimal(numbersToEnglish(row.monto)),
+            })
+          );
           resolve(descuentos);
         } catch (error) {
           reject(new Error(String(error)));
@@ -171,4 +177,4 @@ export async function procesarArchivoConsumoExtraAplicar(file: File): Promise<Nu
       },
     });
   });
-};
+}

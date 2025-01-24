@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useLoadingStore } from '@/lib/store/loading-store';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { useLoadingStore } from "@/lib/store/loading-store";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 export function BlockingLoading() {
   const { isLoading, message } = useLoadingStore();
@@ -13,24 +13,24 @@ export function BlockingLoading() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isLoading) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
 
     if (isLoading) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener("beforeunload", handleBeforeUnload);
     }
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isLoading]);
 
   if (!isLoading) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-background opacity-80 backdrop-blur-sm z-50 pointer-events-none"
+    <div
+      className="fixed inset-0 bg-background backdrop-blur-sm z-50 pointer-events-none"
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -43,7 +43,9 @@ export function BlockingLoading() {
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
             <div className="flex flex-col items-center gap-2">
-              <h2 className="text-xl font-semibold tracking-tight">{message}</h2>
+              <h2 className="text-xl font-semibold tracking-tight">
+                {message}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Por favor, no cierre esta ventana...
               </p>
@@ -54,4 +56,4 @@ export function BlockingLoading() {
       </Card>
     </div>
   );
-} 
+}

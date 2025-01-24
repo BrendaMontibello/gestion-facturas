@@ -1,19 +1,24 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from '@/components/ui/table';
-import { obtenerUsuariosPaginados } from '@/lib/services/usuarios.service';
-import { capitalize } from '@/lib/utils';
-import { Badge } from '../ui/badge';
-import { Contrato } from '@/lib/types/contratos';
-import { Usuario } from '@/lib/types/users';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { obtenerUsuariosPaginados } from "@/lib/services/usuarios.service";
+import { capitalize } from "@/lib/utils";
+import { Badge } from "../ui/badge";
+import { Contrato } from "@/lib/types/contratos";
+import { Usuario } from "@/lib/types/users";
 
 export function UsuariosTable() {
   const searchParams = useSearchParams();
@@ -39,7 +44,13 @@ export function UsuariosTable() {
           pageSize,
           search,
           estado: estado as "activo" | "vencido" | undefined,
-          tipo: tipo as "activo" | "jubilado" | "admin" | "aduana" | "other" | undefined
+          tipo: tipo as
+            | "activo"
+            | "jubilado"
+            | "admin"
+            | "aduana"
+            | "other"
+            | undefined,
         });
 
         setUsuarios(response.data);
@@ -87,7 +98,9 @@ export function UsuariosTable() {
               <TableCell>{usuario.legajo}</TableCell>
               <TableCell>{`${capitalize(
                 usuario.apellido?.toLowerCase() ?? ""
-              )}, ${capitalize(usuario.nombre?.toLowerCase() ?? "")}`}</TableCell>
+              )}, ${capitalize(
+                usuario.nombre?.toLowerCase() ?? ""
+              )}`}</TableCell>
               <TableCell>{usuario.cuil}</TableCell>
               <TableCell>
                 <Link href={`/contratos/${usuario.id}`}>
