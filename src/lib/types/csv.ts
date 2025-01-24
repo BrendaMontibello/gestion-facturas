@@ -7,15 +7,14 @@ export type UserCsv = {
     entidad: string;
     fecha: string;
     disponible: number;
-    ret_mens: number;
+    rem_mens: number;
     apellido: string;
     nombre: string;
     userType: UserType;
 }
 
 export type FacturaCsv = {
-    nombre: string;
-    apellido: string;
+    legajo: string;
     nro_linea: number;
     plan: string;
     monto_valor: number;

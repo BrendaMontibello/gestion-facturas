@@ -1,38 +1,92 @@
-"use client";
-
-import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { FacturaCompleta } from '@/lib/types/facturas';
+import { downloadBillsInCsvFile, downloadBillsInExcelFileporLegajo, downloadBillsInTxtFile, getFacturaExcedente, getFacturaExtras, getFacturaSubTotal, getFacturaTotal } from '@/lib/services/factura.service';
 import {
-    downloadBillsInCsvFile, downloadBillsInExcelFile, downloadBillsInTxtFile
-} from '@/lib/services/factura.service';
-import { FacturadDelMes } from '@/lib/types/facturas';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { capitalize } from '@/lib/utils';
-
-interface FacturasTableProps {
-  facturas: FacturadDelMes[];
-  loading: boolean;
-  month: number;
-  year: number;
-}
+import { calcularCuotaActual } from '@/lib/date';
+import { aplicarConsumoExtraAFacturas } from '@/lib/services/consumos.service';
+import { procesarArchivoConsumoExtraAplicar } from '@/lib/csv-parser';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { FileUpload } from '../ui/file-upload';
+import { startOfMonth } from 'date-fns';
+import { useBlockingLoading } from '@/hooks/use-blocking-loading';
 
 export function FacturasTable({
   facturas,
   loading,
   month,
   year,
-}: Readonly<FacturasTableProps>) {
-  console.log("🚀 ~ facturas:", facturas)
-  const handleDownload = (format: "excel" | "txt" | "csv") => {
-    if (format === "excel") {
-      downloadBillsInExcelFile(facturas, month, year);
-    } else if (format === "txt") {
-      downloadBillsInTxtFile(facturas, month, year);
-    } else if (format === "csv") {
-      downloadBillsInCsvFile(facturas, month, year);
+}: Readonly<{
+  facturas: FacturaCompleta[];
+  loading: boolean;
+  month: number;
+  year: number;
+}>) {
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const { startLoading, stopLoading } = useBlockingLoading();
+    
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Error",
+        description: "Por favor, sube un archivo CSV",
+        variant: "destructive",
+      });
+      return;
+    }
+    startLoading("Procesando consumos...");
+    setIsUploading(true);
+    try {
+      const extras = await procesarArchivoConsumoExtraAplicar(file);
+      const resultado = await aplicarConsumoExtraAFacturas(extras, startOfMonth(new Date(year, month - 1, 1)));
+
+      if (resultado.errores.length > 0) {
+        toast({
+          title: "Advertencia",
+          description: `Se aplicaron ${resultado.aplicados.length} extras, pero hubo ${resultado.errores.length} errores`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Éxito",
+          description: `Se aplicaron ${resultado.aplicados.length} extras correctamente`,
+        });
+      }
+    } catch (error) {
+      console.error('Error applying extras:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al aplicar los extras",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      stopLoading();
+      window.location.reload();
     }
   };
+  
+
+
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -40,47 +94,67 @@ export function FacturasTable({
 
   return (
     <div>
-      {facturas.length > 0 && (
-        <div className="flex justify-start gap-2 mb-4">
-          <Button onClick={() => handleDownload("excel")} className="mb-4">
-            Descargar Excel
-          </Button>
-          <Button onClick={() => handleDownload("csv")} className="mb-4">
-            Descargar CSV
-          </Button>
-          <Button onClick={() => handleDownload("txt")} className="mb-4">
-            Descargar TXT
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-between mb-4">
+        <FileUpload
+          onUpload={handleFileUpload}
+          isLoading={isUploading}
+          accept=".csv"
+          helpText="Formato esperado: legajo, codigo, monto"
+          buttonText="Cargar Consumos"
+          loadingText="Aplicando consumos..."
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Descargar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => downloadBillsInCsvFile(facturas, month, year)}>
+              CSV
+            </DropdownMenuItem>
+              {/* <DropdownMenuItem onClick={() => downloadBillsInExcelFile(facturas, month, year)}>
+                Excel
+              </DropdownMenuItem> */}
+            <DropdownMenuItem onClick={() => downloadBillsInExcelFileporLegajo(facturas, month, year)}>
+              Excel (por legajo)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => downloadBillsInTxtFile(facturas, month, year)}>
+              TXT
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className='text-center'>Legajo</TableHead>
-            <TableHead className='text-center'>Nombre</TableHead>
-            <TableHead className='text-center'>Apellido</TableHead>
-            <TableHead className='text-center'>Cuota</TableHead>
-            <TableHead className='text-center'>Monto Total</TableHead>
-            <TableHead className='text-center'>Impuestos</TableHead>
-            <TableHead className='text-center'>Gestión</TableHead>
-            <TableHead className='text-center'>Total</TableHead>
+            <TableHead className="text-left font-semibold text-black">Legajo</TableHead>
+            <TableHead className="font-semibold text-black">Nombre</TableHead>
+            <TableHead className="text-center font-semibold text-black">Cuota</TableHead>
+            <TableHead className="text-right font-semibold text-black">Disponible</TableHead>
+            <TableHead className="text-right font-semibold text-black">Subtotal</TableHead>
+            <TableHead className="text-right font-semibold text-black">Extras</TableHead>
+            <TableHead className="text-right font-semibold text-black">Excedente</TableHead>
+            <TableHead className="text-right font-semibold text-black">Total</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {facturas.map((factura) => (
             <TableRow key={factura.id}>
-              <TableCell className='text-center'>{factura.bills_mensuales.contracts.users.legajo}</TableCell>
-              <TableCell className='text-center'>
-                {capitalize(factura.bills_mensuales.contracts.users.nombre)}
+              <TableCell className="text-left">{factura.contracts.users.legajo}</TableCell>
+              <TableCell >
+                {capitalize(`${factura.contracts.users.apellido}, ${factura.contracts.users.nombre}`)}
               </TableCell>
-              <TableCell className='text-center'>
-                {capitalize(factura.bills_mensuales.contracts.users.apellido)}
+              <TableCell className="text-center">{factura.contracts.estado === 'cobranza manual' ? 'N/A' : calcularCuotaActual(factura.contracts.fecha_inicio)}</TableCell>
+              <TableCell className="text-right">${factura.contracts.estado === 'cobranza manual' ? 'N/A' : factura.contracts.disponible?.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} ) ?? 'N/A'}</TableCell>
+              <TableCell className="text-right">${getFacturaSubTotal(factura).toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} ) ?? 'N/A'}</TableCell>
+              <TableCell className="text-right">${getFacturaExtras(factura).toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} ) ?? 'N/A'}</TableCell>
+              <TableCell className="text-right">${factura.contracts.estado === 'cobranza manual' ? 'N/A' : getFacturaExcedente(factura).toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} ) ?? 'N/A'}</TableCell>
+              <TableCell className="text-right font-bold">
+                ${getFacturaTotal(factura).toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
               </TableCell>
-              <TableCell className='text-center'>{factura.cuota}</TableCell>
-              <TableCell className='text-right'>${factura.monto_total.toLocaleString("es")}</TableCell>
-              <TableCell className='text-right'>${factura.impuestos.toLocaleString("es")}</TableCell>
-              <TableCell className='text-right'>${factura.gestion_de.toLocaleString("es")}</TableCell>
-              <TableCell className='text-right'>${factura.total.toLocaleString("es")}</TableCell>
             </TableRow>
           ))}
         </TableBody>

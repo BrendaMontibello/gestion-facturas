@@ -5,8 +5,8 @@ export type NuevoContrato = {
     entidad?: string;
     certificado?: string;
     disponible?: number;
-    ret_mens?: number;
-    estado: "activo" | "vencido" | "fuera de norma";
+    rem_mens?: number;
+    estado: "activo" | "vencido" | "cobranza manual";
     tipo: UserType;
 }
 
@@ -18,8 +18,8 @@ export interface Contrato {
     entidad?: string;
     certificado?: string;
     disponible?: number;
-    ret_mens?: number;
-    estado: "activo" | "vencido" | "fuera de norma";
+    rem_mens?: number;
+    estado: "activo" | "vencido" | "cobranza manual";
     tipo: UserType;
   }
 

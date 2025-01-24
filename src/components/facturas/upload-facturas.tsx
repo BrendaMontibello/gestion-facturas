@@ -11,20 +11,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { parsearCSVFacturas } from '@/lib/csv-parser';
 import { insertarFacturasBatch } from '@/lib/services/factura.service';
-import { numbersToEnglish } from '@/lib/utils';
+import { numbersToEnglish, numberToTwoDecimal } from '@/lib/utils';
 
 import { MonthYearPicker } from '../ui/month-year-picker';
 import { FacturasPreview } from './facturas-preview';
 import { NuevaFactura } from '@/lib/types/facturas';
+import { obtenerUsuarioPorLegajo } from '@/lib/services/usuarios.service';
+import { capitalize } from '../../lib/utils';
+import { startOfMonth } from 'date-fns';
+import { useBlockingLoading } from '@/hooks/use-blocking-loading';
 
 export function UploadFacturas() {
   const [isLoading, setIsLoading] = useState(false);
-  const [facturas, setFacturas] = useState<NuevaFactura[]>([]);
-  const [fecha, setFecha] = useState<Date>(new Date());
+  const [facturas, setFacturas] = useState<Record<string, NuevaFactura[]>>({});
+  const [fecha, setFecha] = useState<Date>(startOfMonth(new Date()));
   const [impuestos, setImpuestos] = useState<string>("0");
   const [gestionDe, setGestionDe] = useState<string>("0");
   const { toast } = useToast();
   const router = useRouter();
+  const { startLoading, stopLoading } = useBlockingLoading();
+
 
   const handleFileUpload = async (file: File) => {
     if (impuestos === "0" || gestionDe === "0") {
@@ -35,14 +41,16 @@ export function UploadFacturas() {
       });
       return;
     }
+    startLoading("Procesando archivo...");
     setIsLoading(true);
     try {
       const parsedFacturas = await parsearCSVFacturas(file);
       const facturasWithExtras = parsedFacturas.map((factura) => {
-        const taxes = parseFloat(
-          (factura.monto_total * (numbersToEnglish(impuestos) / 100)).toFixed(2)
+        const taxes = numberToTwoDecimal(
+          (factura.monto_total * (numbersToEnglish(impuestos) / 100))
         );
-        const total = parseFloat((factura.monto_total + taxes + numbersToEnglish(gestionDe)).toFixed(2));
+        const total = numberToTwoDecimal((factura.monto_total + taxes + numbersToEnglish(gestionDe)));
+
         return {
           ...factura,
           fecha: fecha.toISOString(),
@@ -51,10 +59,33 @@ export function UploadFacturas() {
           total: total,
         };
       });
-      setFacturas(facturasWithExtras);
+      const groupedFacturas = facturasWithExtras
+      .toSorted((a, b) => a.legajo.localeCompare(b.legajo))
+      .reduce((acc, factura) => {
+        const legajo = `${factura.legajo}`;
+        if (!acc[legajo]) {
+          acc[legajo] = [];
+        }
+        acc[legajo].push(factura);
+        return acc;
+      }, {} as Record<string, NuevaFactura[]>);
+
+      const facturasConNombre: Record<string, NuevaFactura[]> = {};
+
+      for (const legajo in groupedFacturas) {
+        const usuario = await obtenerUsuarioPorLegajo(legajo);
+        if (usuario) {
+          facturasConNombre[legajo] = groupedFacturas[legajo].map((factura) => ({
+            ...factura,
+            nombre: capitalize(usuario.nombre),
+          }));
+        }
+      }
+
+      setFacturas(facturasConNombre);
       toast({
         title: "Archivo procesado",
-        description: `Se han encontrado ${parsedFacturas.length} facturas para cargar.`,
+        description: `Se han encontrado ${parsedFacturas.length} facturas de ${Object.keys(facturasConNombre).length} usuarios para cargar.`,
       });
     } catch (error) {
       console.error("Error al procesar el archivo:", error);
@@ -65,11 +96,13 @@ export function UploadFacturas() {
         variant: "destructive",
       });
     } finally {
+      stopLoading();
       setIsLoading(false);
     }
   };
 
   const handleConfirmUpload = async () => {
+    startLoading("Cargando facturas...");
     setIsLoading(true);
     try {
       const { uploaded, notUploaded } = await insertarFacturasBatch(facturas, fecha);
@@ -77,7 +110,7 @@ export function UploadFacturas() {
         title: "Éxito",
         description: `Se han cargado ${uploaded} facturas correctamente. ${notUploaded} facturas no se pudieron cargar.`,
       });
-      setFacturas([]);
+      setFacturas({});
       router.push("/cargar-facturas");
     } catch (error) {
       console.error("Error al cargar facturas:", error);
@@ -87,6 +120,7 @@ export function UploadFacturas() {
         variant: "destructive",
       });
     } finally {
+      stopLoading();
       setIsLoading(false);
     }
   };
@@ -148,7 +182,7 @@ export function UploadFacturas() {
           loadingText="Procesando..."
         />
 
-        {facturas.length > 0 && (
+        {Object.keys(facturas).length > 0 && (
           <FacturasPreview
             facturas={facturas}
             onConfirm={handleConfirmUpload}

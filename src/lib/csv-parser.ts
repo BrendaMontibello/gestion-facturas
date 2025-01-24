@@ -1,30 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Papa from 'papaparse';
 
-import { numbersToEnglish } from './utils';
+import { numbersToEnglish, numberToTwoDecimal } from './utils';
 import { FacturaCsv } from './types/csv';
-import { NuevoUsuario } from './types/users';
-import { NuevoDescuento } from './types/descuentos';
+import { NuevoUsuario, UserType } from './types/users';
+import { NuevoConsumoExtraAAplicar, NuevoConsumoExtra } from './types/consumos';
 
 export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
-      complete: (results) => {
+      complete: (results: { data: NuevoUsuario[] }) => {
         const usuarios = results.data
-          .filter((row: any) => row.legajo && row.cuil)
-          .map((row: any) => ({
+          .filter((row) => row.legajo)
+          .map((row) => ({
             legajo: row.legajo?.toString().trim(),
-            cuil: row.cuil?.toString().trim(),
-            certificado: row.certificado?.toString().trim(),
-            entidad: row.entidad?.toString().trim(),
+            cuil: row.cuil?.toString().trim() || "",
+            certificado: row.certificado?.toString().trim() || "",
+            entidad: row.entidad?.toString().trim() || "",
             fecha: row.fecha?.toString().trim().padStart(8, '0'),
             disponible:
               parseFloat(row.disponible?.toString().replace(",", ".")) || 0,
-            ret_mens: parseFloat(row.retMens?.toString().replace(",", ".")) || 0,
+            rem_mens: parseFloat(row.rem_mens?.toString().replace(",", ".")) || 0,
             nombre: row.nombre?.toString().trim(),
             apellido: row.apellido?.toString().trim(),
-            observaciones: row.observaciones?.toString().trim(),
-            userType: row.estado?.toString().trim().toLowerCase() ?? "other",
+            userType: row.userType?.toString().trim().toLowerCase() as UserType ?? "other",
           }));
         resolve(usuarios);
       },
@@ -34,16 +33,16 @@ export function parsearUsuariosCSV(file: File): Promise<NuevoUsuario[]> {
       transformHeader: (header) => {
         const headerMap: { [key: string]: string } = {
           CUIL: "cuil",
-          legajo: "legajo",
-          certificado: "certificado",
-          entidad: "entidad",
+          LEGAJO: "legajo",
+          CERTIFICADO: "certificado",
+          ENTIDAD: "entidad",
           FECHA: "fecha",
-          estado: "estado",
-          DISPONIB: "disponible",
-          "RET MENS": "retMens",
-          Nombre: "nombre",
-          Apellido: "apellido",
-          Observaciones: "observaciones",
+          ESTADO: "userType",
+          DISPONIBLE: "disponible",
+          "REM MENS": "rem_mens",
+          NOMBRE: "nombre",
+          APELLIDO: "apellido",
+          OBSERVACIONES: "observaciones",
         };
         return headerMap[header] || header.toLowerCase();
       },
@@ -65,6 +64,7 @@ FacturaCsv[]
           "Nro Linea": "nro_linea",
           Usuario: "usuario",
           Plan: "plan",
+          legajo: "legajo",
           "Monto valor plan": "monto_valor",
           "Monto servicios adicionales": "monto_servic",
           "Monto bonificaciones": "monto_bonifi",
@@ -81,20 +81,11 @@ FacturaCsv[]
       complete: (results) => {
         try {
           const facturas = results.data
-            .filter((row: any) => row.nro_linea && row.usuario)
+            .filter((row: any) => row.nro_linea && row.legajo)
             .map((row: any) => {
               return {
                 nro_linea: parseInt(row.nro_linea),
-                nombre: row.usuario
-                  ?.split(",")[1]
-                  ?.toString()
-                  .toLowerCase()
-                  .trim(),
-                apellido: row.usuario
-                  ?.split(", ")[0]
-                  ?.toString()
-                  .toLowerCase()
-                  .trim(),
+                legajo: row.legajo,
                 plan: row.plan?.toString().trim(),
                 monto_valor: numbersToEnglish(row.monto_valor),
                 monto_servic: numbersToEnglish(row.monto_servic),
@@ -108,6 +99,7 @@ FacturaCsv[]
                 monto_total: numbersToEnglish(row.monto_total),
               };
             });
+          console.log("🚀 ~ file: csv-parser.ts:102 ~ Papa.parse ~ facturas:", facturas.length)
           resolve(facturas);
         } catch (error) {
           reject(new Error(String(error)));
@@ -118,7 +110,7 @@ FacturaCsv[]
   });
 }
 
-export async function procesarArchivoDescuentos(file: File): Promise<NuevoDescuento[]> {
+export async function procesarArchivoConsumoExtra(file: File): Promise<NuevoConsumoExtra[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -148,3 +140,35 @@ export async function procesarArchivoDescuentos(file: File): Promise<NuevoDescue
     });
   });
 }
+
+export async function procesarArchivoConsumoExtraAplicar(file: File): Promise<NuevoConsumoExtraAAplicar[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => {
+        const headerMap: { [key: string]: string } = {
+         legajo: "legajo",
+         codigo: "codigo",
+         monto: "monto",
+        };
+        return headerMap[header] || header.toLowerCase();
+      },
+      complete: (results: { data: { legajo: string; codigo: string; monto: string }[] }) => {
+        try {
+          const descuentos = results.data.map((row: { legajo: string; codigo: string; monto: string }) => ({
+            legajo: row.legajo,
+            codigo: row.codigo?.padStart(2, '0'),
+            monto: numberToTwoDecimal(numbersToEnglish(row.monto)),
+          }));
+          resolve(descuentos);
+        } catch (error) {
+          reject(new Error(String(error)));
+        }
+      },
+      error: (error) => {
+        reject(error);
+      },
+    });
+  });
+};

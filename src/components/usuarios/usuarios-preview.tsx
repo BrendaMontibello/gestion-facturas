@@ -12,6 +12,7 @@ import { insertarUsuario } from '@/lib/services/usuarios.service';
 
 import { capitalize, formatearFechaInicial } from '@/lib/utils';
 import { NuevoUsuario } from '@/lib/types/users';
+import { useBlockingLoading } from '@/hooks/use-blocking-loading';
 
 interface UsuariosPreviewProps {
   usuarios: NuevoUsuario[];
@@ -25,8 +26,10 @@ export function UsuariosPreview({
   const [loading, setLoading] = useState(false);
   const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
   const [showAlert, setShowAlert] = useState(false);
+  const { startLoading, stopLoading } = useBlockingLoading(); 
 
   const handleUpload = async () => {
+    startLoading("Cargando usuarios...");
     setLoading(true);
     const errors: Record<string, boolean> = {};
     try {
@@ -34,10 +37,10 @@ export function UsuariosPreview({
         try {
           const user = await insertarUsuario(usuario);
           await crearContrato(user.id, usuario);
-          errors[usuario.cuil] = false;
+          errors[usuario.legajo] = false;
         } catch (error) {
-          console.error(`Error uploading usuario for ${usuario.cuil}:`, error);
-          errors[usuario.cuil] = true;
+          console.error(`Error uploading usuario for ${usuario.legajo}:`, error);
+          errors[usuario.legajo] = true;
         }
       }
       setErrorUsers(errors);
@@ -47,6 +50,7 @@ export function UsuariosPreview({
       console.error("Error uploading usuarios:", error);
     } finally {
       setLoading(false);
+      stopLoading();
     }
   };
 
@@ -74,7 +78,7 @@ export function UsuariosPreview({
             <TableHead>Entidad</TableHead>
             <TableHead>Certificado</TableHead>
             <TableHead>Disponible</TableHead>
-            <TableHead>Ret Mensual</TableHead>
+            <TableHead>Rem. Mensual</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Fecha</TableHead>
           </TableRow>
@@ -83,20 +87,20 @@ export function UsuariosPreview({
           {usuarios.map((usuario) => {
             const invalidCuil = isInvalidCuil(usuario.cuil);
             const invalidDate = isInvalidDate(usuario.fecha);
-            const uploadError = errorUsers[usuario.cuil];
+            const uploadError = errorUsers[usuario.legajo];
             const rowClass =
               invalidCuil || (invalidDate && usuario.userType === "activo") || uploadError ? "bg-red-100" : "";
 
             return (
-              <TableRow key={usuario.cuil} className={rowClass}>
+              <TableRow key={usuario.legajo} className={rowClass}>
                 <TableCell>{usuario.legajo}</TableCell>
-                <TableCell>{usuario.cuil}</TableCell>
+                <TableCell>{usuario.cuil ?? "N/A"}</TableCell>
                 <TableCell>{capitalize(usuario.apellido)}</TableCell>
                 <TableCell>{capitalize(usuario.nombre)}</TableCell>
-                <TableCell>{usuario.entidad}</TableCell>
-                <TableCell>{usuario.certificado}</TableCell>
+                <TableCell>{usuario.entidad ?? "N/A"}</TableCell>
+                <TableCell>{usuario.certificado ?? "N/A"}</TableCell>
                 <TableCell>{usuario.disponible}</TableCell>
-                <TableCell>{usuario.ret_mens}</TableCell>
+                <TableCell>{usuario.rem_mens}</TableCell>
                 <TableCell>{usuario.userType}</TableCell>
                 <TableCell>
                   {invalidDate && usuario.userType === "activo"

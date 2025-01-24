@@ -18,13 +18,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { capitalize } from "@/lib/utils";
 
 import { Button } from "../ui/button";
 import { NuevaFactura } from "@/lib/types/facturas";
 
 interface FacturasPreviewProps {
-  facturas: NuevaFactura[];
+  facturas: Record<string, NuevaFactura[]>;
   onConfirm: () => Promise<void>;
   isLoading: boolean;
   // fecha: Date;
@@ -38,23 +37,9 @@ export function FacturasPreview({
 }: Readonly<FacturasPreviewProps>) {
   const [currentPage, setCurrentPage] = useState(1);
   const facturasPerPage = 50;
-  // const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
-  // const [loadingUsers, setLoadingUsers] = useState<Record<string, boolean>>({});
-
-  // Group facturas by nombre
-  const groupedFacturas = facturas
-    .toSorted((a, b) => a.apellido.localeCompare(b.apellido))
-    .reduce((acc, factura) => {
-      const nombreCompleto = `${factura.apellido}, ${factura.nombre}`;
-      if (!acc[nombreCompleto]) {
-        acc[nombreCompleto] = [];
-      }
-      acc[nombreCompleto].push(factura);
-      return acc;
-    }, {} as Record<string, NuevaFactura[]>);
 
   const totalPages = Math.ceil(
-    Object.keys(groupedFacturas).length / facturasPerPage
+    Object.keys(facturas).length / facturasPerPage
   );
 
   const handlePageChange = (newPage: number) => {
@@ -63,7 +48,7 @@ export function FacturasPreview({
     }
   };
 
-  const paginatedFacturas = Object.entries(groupedFacturas).slice(
+  const paginatedFacturas = Object.entries(facturas).slice(
     (currentPage - 1) * facturasPerPage,
     currentPage * facturasPerPage
   );
@@ -91,11 +76,11 @@ export function FacturasPreview({
   return (
     <div className="relative">
       <Accordion type="multiple">
-        {paginatedFacturas.map(([nombre, userFacturas]) => (
-          <AccordionItem key={nombre} value={nombre}>
+        {paginatedFacturas.map(([legajo, userFacturas]) => (
+          <AccordionItem key={legajo} value={legajo}>
             <AccordionTrigger>
               <h3 className="text-lg font-semibold flex items-center">
-                {capitalize(nombre)}
+                {`${userFacturas[0].nombre} - ${userFacturas[0].legajo}`}
                 {/* {errorUsers[nombre] && (
                   <AlertCircle className="ml-2 text-red-500" />
                 )} */}
@@ -123,48 +108,48 @@ export function FacturasPreview({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {userFacturas.map((factura, index) => (
-                    <TableRow key={index}>
+                  {userFacturas.map((factura) => (
+                    <TableRow key={factura.legajo+factura.nro_linea}>
                       <TableCell>{factura.nro_linea}</TableCell>
                       <TableCell>{factura.plan}</TableCell>
                       <TableCell>
-                        ${factura.monto_valor.toLocaleString("es")}
+                        ${factura.monto_valor.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_servic.toLocaleString("es")}
+                        ${factura.monto_servic.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_bonifi.toLocaleString("es")}
+                        ${factura.monto_bonifi.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_llama.toLocaleString("es")}
+                        ${factura.monto_llama.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_llamcd.toLocaleString("es")}
+                        ${factura.monto_llamcd.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_roami.toLocaleString("es")}
+                        ${factura.monto_roami.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_mens.toLocaleString("es")}
+                        ${factura.monto_mens.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_datos.toLocaleString("es")}
+                        ${factura.monto_datos.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_otros.toLocaleString("es")}
+                        ${factura.monto_otros.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_total.toLocaleString("es")}
+                        ${factura.monto_total.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                       <TableCell>
-                        ${factura.impuestos.toLocaleString("es")}
+                        ${factura.impuestos.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                       <TableCell>
-                        ${factura.gestion_de.toLocaleString("es")}
+                        ${factura.gestion_de.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                       <TableCell>
-                        ${factura.total.toLocaleString("es")}
+                        ${factura.total.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
                       </TableCell>
                     </TableRow>
                   ))}

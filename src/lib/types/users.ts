@@ -8,7 +8,7 @@ export interface NuevoUsuario {
   entidad: string;
   fecha: string;
   disponible: number;
-  ret_mens: number;
+  rem_mens: number;
   apellido: string;
   nombre: string;
   userType: UserType;

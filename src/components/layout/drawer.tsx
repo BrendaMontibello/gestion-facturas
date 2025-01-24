@@ -15,7 +15,7 @@ const menuItems = [
   { href: "/usuarios", icon: Users, label: "Ver Usuarios" },
   { href: "/cargar-facturas", icon: Receipt, label: "Cargar Facturas" },
   { href: "/facturas", icon: Receipt, label: "Ver Facturas" },
-  { href: "/descuentos", icon: Receipt, label: "Ver Descuentos" },
+  { href: "/consumos", icon: Receipt, label: "Ver Consumos" },
 ];
 
 export function NavigationDrawer() {

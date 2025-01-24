@@ -1,4 +1,4 @@
-import { addYears, isAfter } from 'date-fns';
+import { addYears, isAfter, isBefore } from 'date-fns';
 
 import { createClient as supabase } from '../db/client/supabase-client';
 
@@ -36,14 +36,12 @@ export async function crearContrato(
     return latestContract as Contrato;
   } else {
 
-    let estado;
-    if (!fechaFinal) {
-      estado = "fuera de norma";
-    } else if (fechaFinal < new Date()) {
+    let estado = 'activo';
+    if (nuevoUsuario.userType !== 'activo') {
+      estado = "cobranza manual";
+    } else if (fechaFinal && isBefore(fechaFinal, new Date())) {
       estado = "vencido";
-    } else {
-      estado = "activo";
-    };
+    }
 
     const contrato = {
       user_id: usuarioId,
@@ -52,7 +50,7 @@ export async function crearContrato(
       entidad: nuevoUsuario.entidad ?? undefined,
       certificado: nuevoUsuario.certificado ?? undefined,
       disponible: nuevoUsuario.disponible ?? undefined,
-      ret_mens: nuevoUsuario.ret_mens ?? undefined,
+      rem_mens: nuevoUsuario.rem_mens ?? undefined,
       estado,
       tipo: nuevoUsuario.userType,
     };
@@ -61,7 +59,8 @@ export async function crearContrato(
       .from("contracts")
       .insert(contrato)
       .select()
-      .single();
+      .maybeSingle();
+
 
     if (error) {
       console.error("Error inserting contract:", error);
@@ -72,16 +71,16 @@ export async function crearContrato(
   }
 }
 
-export async function obtenerContratosPorCuil(cuil: string): Promise<{
+export async function obtenerContratosPorUserId(userId: string): Promise<{
   user: Usuario;
   contracts: Contrato[];
 }> {
   const { data: userData, error: userError } = await supabase()
     .from("users")
     .select("*")
-    .eq("cuil", cuil)
-    .limit(1)
-    .single();
+    .eq("id", userId)
+    .maybeSingle();
+
 
   if (userError) {
     console.error("Error fetching users:", userError);
@@ -91,7 +90,8 @@ export async function obtenerContratosPorCuil(cuil: string): Promise<{
   const { data: contractData, error: contractError } = await supabase()
     .from("contracts")
     .select(`*`)
-    .eq("user_id", userData.id);
+    .eq("user_id", userId)
+    .order("fecha_inicio", { ascending: false });
 
   if (contractError) {
     console.error("Error fetching bills:", contractError);
@@ -113,4 +113,28 @@ export async function actualizarContrato(contrato: Contrato) {
   }
 
   return data;
+}
+
+export async function obtenerContratoPorId(id: string) {
+  const { data: contract, error: contractError } = await supabase()
+    .from("contracts")
+    .select(`
+      *,
+      users (
+        id,
+        legajo,
+        nombre,
+        apellido,
+        cuil
+      )
+    `)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (contractError) throw contractError;
+
+  return {
+    contract,
+    user: contract.users
+  };
 }

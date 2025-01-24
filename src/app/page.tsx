@@ -85,20 +85,20 @@ export default function Home() {
           </Card>
         </Link>
 
-          <Link href="/descuentos">
+          <Link href="/consumos">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Percent className="h-6 w-6" />
-                  Gestionar Descuentos
+                  Gestionar Consumos Extras
                 </CardTitle>
                 <CardDescription>
-                  Administrar descuentos para facturas
+                  Administrar consumos extras para facturas
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Crea y gestiona los códigos de descuento aplicables a las
+                  Crea y gestiona los códigos de consumo extra aplicables a las
                   facturas.
                 </p>
               </CardContent>
