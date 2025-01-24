@@ -89,7 +89,6 @@ export async function obtenerFacturasMensualesPorContrato(
          `
        ) .eq("contracts.id", contractId)
     
-    console.log("🚀 ~ billsMensuales:", billsMensuales)
   if (billsMensualesError) {
     console.error("Error fetching bills:", billsMensualesError);
     throw billsMensualesError;
@@ -209,8 +208,6 @@ export async function insertarFacturasBatch(
 }
 
 export async function crearFacturaMensual(contract_id: string, fecha: Date): Promise<string> {
-  console.log("🚀 ~ crearFacturaMensual ~ fecha:", fecha)
-  console.log("🚀 ~ crearFacturaMensual ~ contract_id:", contract_id)
   const { data, error } = await supabase()
     .from("bills_mensuales")
     .insert({ contract_id, fecha })
@@ -401,6 +398,7 @@ export async function downloadBillsInExcelFileporLegajo(
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas 2");
   XLSX.writeFile(workbook, `facturas_legajos_${month.toString().padStart(2, '0')}_${year}.xlsx`);
 }
 
@@ -413,8 +411,8 @@ export async function downloadBillsInTxtFile(
     .map((factura) => {
       const newImporte = (Math.round(getFacturaTotal(factura) * 100)).toString().padStart(13, "0");
       if (parseInt(newImporte) <= 0) return;
-      const fecha = new Date(factura.fecha);
-      const fechaAlta = `${fecha.getDate() + 1}${(fecha.getMonth() + 1).toString().padStart(2, "0")}${fecha.getFullYear()}`;
+      const fecha = new Date(factura.contracts.fecha_inicio);
+      const fechaAlta = `${(fecha.getDate() + 1).toString().padStart(2, "0")}${(fecha.getMonth() + 1).toString().padStart(2, "0")}${fecha.getFullYear()}`;
       const fechaFacturacion = new Date(`${year}-${month}-01`);
       const fechaFactura = `10${(fechaFacturacion.getMonth() + 1).toString().padStart(2, "0")}${fechaFacturacion.getFullYear()}`;
       const fechaVencimiento = `28${(fechaFacturacion.getMonth() + 1).toString().padStart(2, "0")}${fechaFacturacion.getFullYear()}`;

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { parsearCSVFacturas } from '@/lib/csv-parser';
 import { insertarFacturasBatch } from '@/lib/services/factura.service';
-import { numbersToEnglish } from '@/lib/utils';
+import { numbersToEnglish, numberToTwoDecimal } from '@/lib/utils';
 
 import { MonthYearPicker } from '../ui/month-year-picker';
 import { FacturasPreview } from './facturas-preview';
@@ -46,10 +46,10 @@ export function UploadFacturas() {
     try {
       const parsedFacturas = await parsearCSVFacturas(file);
       const facturasWithExtras = parsedFacturas.map((factura) => {
-        const taxes = parseFloat(
-          (factura.monto_total * (numbersToEnglish(impuestos) / 100)).toFixed(2)
+        const taxes = numberToTwoDecimal(
+          (factura.monto_total * (numbersToEnglish(impuestos) / 100))
         );
-        const total = parseFloat((factura.monto_total + taxes + numbersToEnglish(gestionDe)).toFixed(2));
+        const total = numberToTwoDecimal((factura.monto_total + taxes + numbersToEnglish(gestionDe)));
 
         return {
           ...factura,
@@ -87,8 +87,6 @@ export function UploadFacturas() {
         title: "Archivo procesado",
         description: `Se han encontrado ${parsedFacturas.length} facturas de ${Object.keys(facturasConNombre).length} usuarios para cargar.`,
       });
-        console.log("🚀 ~ file: upload-facturas.tsx:90 ~ handleFileUpload ~ Object.keys(facturasConNombre).length:", Object.keys(facturasConNombre).length);
-      console.log("🚀 ~ file: upload-facturas.tsx:90 ~ handleFileUpload ~ {parsedFacturas.length:", parsedFacturas.length);
     } catch (error) {
       console.error("Error al procesar el archivo:", error);
       toast({
@@ -107,8 +105,7 @@ export function UploadFacturas() {
     startLoading("Cargando facturas...");
     setIsLoading(true);
     try {
-      const { uploaded, notUploaded, errors } = await insertarFacturasBatch(facturas, fecha);
-      console.log("🚀 ~ file: upload-facturas.tsx:109 ~ handleConfirmUpload ~ errors:", errors);
+      const { uploaded, notUploaded } = await insertarFacturasBatch(facturas, fecha);
       toast({
         title: "Éxito",
         description: `Se han cargado ${uploaded} facturas correctamente. ${notUploaded} facturas no se pudieron cargar.`,
