@@ -1,11 +1,17 @@
 "use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export function UsuariosFilter() {
   const router = useRouter();
@@ -51,6 +57,7 @@ export function UsuariosFilter() {
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="activo">Activo</SelectItem>
+            <SelectItem value="renovar">Renovar</SelectItem>
             <SelectItem value="vencido">Vencido</SelectItem>
           </SelectContent>
         </Select>

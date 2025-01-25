@@ -1,6 +1,6 @@
-import { ClassValue, clsx } from 'clsx';
-import { differenceInMonths } from 'date-fns';
-import { twMerge } from 'tailwind-merge';
+import { ClassValue, clsx } from "clsx";
+import { differenceInMonths, isAfter } from "date-fns";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,16 +11,24 @@ export function calcularFechaFinContrato(fechaInicio: Date): string {
   return fechaInicio.toISOString().split("T")[0];
 }
 
-export function determinarEstadoContrato(
-  fechaInicio: Date,
-  fechaFinal: Date
-): "Activo" | "Renovar" | "Vencido" {
-  const hoy = new Date();
-  const mesesHastaFinal = differenceInMonths(fechaFinal, hoy);
+export function determinarCuota(fechaFinal?: string): number {
+  if (!fechaFinal) return 0;
+  if (isAfter(new Date(), new Date(fechaFinal))) return 0;
+  const fechaFinalDate = new Date(fechaFinal);
+  const cuota = 12 - differenceInMonths(fechaFinalDate, new Date());
+  return cuota > 12 ? 0 : cuota;
+}
 
-  if (mesesHastaFinal > 2) return "Activo";
-  if (mesesHastaFinal >= 0) return "Renovar";
-  return "Vencido";
+export function determinarEstadoContrato(
+  fechaFinal: string | undefined
+): "Activo" | "Renovar" | "Vencido" | "Pago Manual" {
+  if (!fechaFinal) return "Pago Manual";
+
+  if (isAfter(new Date(), new Date(fechaFinal))) return "Vencido";
+  const mesesHastaFinal = determinarCuota(fechaFinal);
+
+  if (mesesHastaFinal > 10) return "Renovar";
+  return "Activo";
 }
 
 export function formatearFechaInicial(fecha: string): string {
@@ -52,9 +60,7 @@ export function formatearMonto(monto: number): string {
 export function numbersToEnglish(number: string): number {
   // Replace the dot with an empty string and the comma with a dot
   const normalizedNumber = number?.replace(/\./g, "").replace(",", ".");
-  const parsedNumber = normalizedNumber
-    ? parseFloat(normalizedNumber)
-    : 0;
+  const parsedNumber = normalizedNumber ? parseFloat(normalizedNumber) : 0;
   return numberToTwoDecimal(parsedNumber);
 }
 

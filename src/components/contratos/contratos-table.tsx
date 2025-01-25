@@ -1,8 +1,8 @@
-import { format } from 'date-fns';
-import { ArrowRight, Pencil } from 'lucide-react';
-import Link from 'next/link';
+import { format } from "date-fns";
+import { ArrowRight, Pencil } from "lucide-react";
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,12 +10,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Contrato } from '@/lib/types/contratos';
-import { capitalize } from '@/lib/utils';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Contrato } from "@/lib/types/contratos";
+import {
+  capitalize,
+  determinarCuota,
+  determinarEstadoContrato,
+} from "@/lib/utils";
 
-export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }>) {
+export function ContratosTable({
+  contratos,
+}: Readonly<{ contratos: Contrato[] }>) {
   return (
     <div className="mt-6">
       <Table>
@@ -23,6 +29,7 @@ export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }
           <TableRow>
             <TableHead>Fecha Inicio</TableHead>
             <TableHead>Fecha Final</TableHead>
+            <TableHead>Cuota Actual</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Entidad</TableHead>
@@ -34,17 +41,33 @@ export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }
         <TableBody>
           {contratos.map((contrato) => (
             <TableRow key={contrato.id}>
-              <TableCell>{format(new Date(contrato.fecha_inicio), 'dd/MM/yyyy')}</TableCell>
-              <TableCell>{contrato.fecha_final ? format(new Date(contrato.fecha_final), 'dd/MM/yyyy') : '-'}</TableCell>
               <TableCell>
-                <Badge variant={contrato.estado === 'activo' ? 'default' : 'destructive'}>
-                  {capitalize(contrato.estado)}
+                {format(new Date(contrato.fecha_inicio), "dd/MM/yyyy")}
+              </TableCell>
+              <TableCell>
+                {contrato.fecha_final
+                  ? format(new Date(contrato.fecha_final), "dd/MM/yyyy")
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                <Badge>{determinarCuota(contrato.fecha_final)}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    determinarEstadoContrato(contrato.fecha_final) === "Activo"
+                      ? "default"
+                      : determinarEstadoContrato(contrato.fecha_final) ===
+                        "Renovar"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                >
+                  {capitalize(determinarEstadoContrato(contrato.fecha_final))}
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
-                  {capitalize(contrato.tipo)}
-                </Badge>
+                <Badge variant="secondary">{capitalize(contrato.tipo)}</Badge>
               </TableCell>
               <TableCell>{contrato.entidad}</TableCell>
               <TableCell>{contrato.certificado}</TableCell>
@@ -70,4 +93,4 @@ export function ContratosTable({ contratos }: Readonly<{ contratos: Contrato[] }
       </Table>
     </div>
   );
-} 
+}

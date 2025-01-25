@@ -1,6 +1,12 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import {
+  ChevronFirst,
+  ChevronLast,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,7 +21,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { obtenerUsuariosPaginados } from "@/lib/services/usuarios.service";
-import { capitalize } from "@/lib/utils";
+import {
+  capitalize,
+  determinarCuota,
+  determinarEstadoContrato,
+} from "@/lib/utils";
 import { Badge } from "../ui/badge";
 import { Contrato } from "@/lib/types/contratos";
 import { Usuario } from "@/lib/types/users";
@@ -26,7 +36,7 @@ export function UsuariosTable() {
     (Usuario & { contracts?: Contrato[] })[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -43,7 +53,7 @@ export function UsuariosTable() {
           page,
           pageSize,
           search,
-          estado: estado as "activo" | "vencido" | undefined,
+          estado: estado as "activo" | "vencido" | "renovar" | undefined,
           tipo: tipo as
             | "activo"
             | "jubilado"
@@ -54,7 +64,7 @@ export function UsuariosTable() {
         });
 
         setUsuarios(response.data);
-        setTotal(response.total);
+        setTotalPages(response.totalPages);
         setCurrentPage(response.page);
       } catch (error) {
         console.error("Error fetching usuarios:", error);
@@ -65,8 +75,6 @@ export function UsuariosTable() {
 
     fetchUsuarios();
   }, [searchParams]);
-
-  const totalPages = Math.ceil(total / pageSize);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
@@ -87,6 +95,7 @@ export function UsuariosTable() {
             <TableHead>Apellido y Nombre</TableHead>
             <TableHead>CUIL</TableHead>
             <TableHead>Contratos</TableHead>
+            <TableHead>Cuota</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Acciones</TableHead>
@@ -109,14 +118,27 @@ export function UsuariosTable() {
               </TableCell>
               <TableCell>
                 {usuario.contracts && (
+                  <Badge>
+                    {determinarCuota(usuario.contracts[0].fecha_final)}
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {usuario.contracts && (
                   <Badge
                     variant={
-                      usuario.contracts[0]?.estado === "activo"
+                      determinarEstadoContrato(
+                        usuario.contracts[0].fecha_final
+                      ) === "Activo"
                         ? "default"
+                        : determinarEstadoContrato(
+                            usuario.contracts[0].fecha_final
+                          ) === "Renovar"
+                        ? "secondary"
                         : "destructive"
                     }
                   >
-                    {capitalize(usuario.contracts[0]?.estado)}
+                    {determinarEstadoContrato(usuario.contracts[0].fecha_final)}
                   </Badge>
                 )}
               </TableCell>
@@ -146,27 +168,51 @@ export function UsuariosTable() {
       </Table>
 
       <div className="flex items-center justify-between space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Anterior
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronFirst className="h-4 w-4" />
+            Primero
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </Button>
+        </div>
         <div className="text-sm text-muted-foreground">
           Página {currentPage} de {totalPages}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Siguiente
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Siguiente
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              Último
+              <ChevronLast className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

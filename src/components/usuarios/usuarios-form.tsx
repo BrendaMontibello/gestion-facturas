@@ -1,22 +1,27 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
-    Form, FormControl, FormField, FormItem, FormLabel, FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { actualizarUsuario } from '@/lib/services/usuarios.service';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Usuario } from '@/lib/types/users';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { actualizarUsuario } from "@/lib/services/usuarios.service";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Usuario } from "@/lib/types/users";
 const usuarioSchema = z.object({
   legajo: z.string().min(1, "El legajo es requerido"),
-  cuil: z.string().min(1, "El CUIL es requerido"),
+  cuil: z.string(),
   certificado: z.string(),
   entidad: z.string(),
   fecha: z.string().min(1, "La fecha es requerida"),
@@ -94,7 +99,7 @@ export function UsuarioForm({ usuario }: Readonly<{ usuario: Usuario }>) {
               <FormItem>
                 <FormLabel>CUIL</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

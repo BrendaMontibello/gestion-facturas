@@ -1,11 +1,10 @@
-import { addYears, isAfter, isBefore } from 'date-fns';
+import { addYears, isAfter } from "date-fns";
 
-import { createClient as supabase } from '../db/client/supabase-client';
+import { createClient as supabase } from "../db/client/supabase-client";
 
-import { formatearFechaInicial } from '../utils';
-import { Contrato } from '../types/contratos';
-import { NuevoUsuario, Usuario } from '../types/users';
-
+import { formatearFechaInicial } from "../utils";
+import { Contrato } from "../types/contratos";
+import { NuevoUsuario, Usuario } from "../types/users";
 
 export async function crearContrato(
   usuarioId: string,
@@ -14,7 +13,9 @@ export async function crearContrato(
   const fechaFormateada = formatearFechaInicial(nuevoUsuario.fecha);
   const newDate = new Date(fechaFormateada);
   const fechaInicio = isNaN(newDate.getTime()) ? new Date() : newDate;
-  const fechaFinal = isNaN(newDate.getTime()) ? undefined : addYears(fechaInicio, 1);
+  const fechaFinal = isNaN(newDate.getTime())
+    ? undefined
+    : addYears(fechaInicio, 1);
 
   // Check for existing contracts
   const { data: existingContracts, error: contractCheckError } =
@@ -35,13 +36,12 @@ export async function crearContrato(
     // If the latest contract is still valid, do nothing
     return latestContract as Contrato;
   } else {
-
-    let estado = 'activo';
-    if (nuevoUsuario.userType !== 'activo') {
-      estado = "cobranza manual";
-    } else if (fechaFinal && isBefore(fechaFinal, new Date())) {
-      estado = "vencido";
-    }
+    // let estado = 'activo';
+    // if (nuevoUsuario.userType !== 'activo') {
+    //   estado = "cobranza manual";
+    // } else if (fechaFinal && isBefore(fechaFinal, new Date())) {
+    //   estado = "vencido";
+    // }
 
     const contrato = {
       user_id: usuarioId,
@@ -51,7 +51,7 @@ export async function crearContrato(
       certificado: nuevoUsuario.certificado ?? undefined,
       disponible: nuevoUsuario.disponible ?? undefined,
       rem_mens: nuevoUsuario.rem_mens ?? undefined,
-      estado,
+      // estado,
       tipo: nuevoUsuario.userType,
     };
 
@@ -60,7 +60,6 @@ export async function crearContrato(
       .insert(contrato)
       .select()
       .maybeSingle();
-
 
     if (error) {
       console.error("Error inserting contract:", error);
@@ -80,7 +79,6 @@ export async function obtenerContratosPorUserId(userId: string): Promise<{
     .select("*")
     .eq("id", userId)
     .maybeSingle();
-
 
   if (userError) {
     console.error("Error fetching users:", userError);
@@ -118,7 +116,8 @@ export async function actualizarContrato(contrato: Contrato) {
 export async function obtenerContratoPorId(id: string) {
   const { data: contract, error: contractError } = await supabase()
     .from("contracts")
-    .select(`
+    .select(
+      `
       *,
       users (
         id,
@@ -127,7 +126,8 @@ export async function obtenerContratoPorId(id: string) {
         apellido,
         cuil
       )
-    `)
+    `
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -135,6 +135,6 @@ export async function obtenerContratoPorId(id: string) {
 
   return {
     contract,
-    user: contract.users
+    user: contract.users,
   };
 }

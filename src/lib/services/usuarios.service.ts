@@ -1,18 +1,18 @@
-import { createClient as supabase } from '../db/client/supabase-client';
-import { Contrato } from '../types/contratos';
-import { PaginatedResponse, PaginationParams } from '../types/pagination';
-import { NuevoUsuario, Usuario } from '../types/users';
+import { createClient as supabase } from "../db/client/supabase-client";
+import { Contrato } from "../types/contratos";
+import { PaginatedResponse, PaginationParams } from "../types/pagination";
+import { NuevoUsuario, Usuario } from "../types/users";
+import { addMonths } from "date-fns";
 
 export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
   if (!nuevoUsuario.legajo) throw new Error("Legajo is required");
-  
+
   // Check if the user already exists
   const { data: existingUser, error: userCheckError } = await supabase()
     .from("users")
     .select("*")
     .eq("legajo", nuevoUsuario.legajo)
     .maybeSingle();
-
 
   if (userCheckError && userCheckError.code !== "PGRST116")
     throw userCheckError;
@@ -48,9 +48,9 @@ export async function obtenerUsuariosPaginados(
   const start = (page - 1) * pageSize;
 
   // Base query - only include contracts if we're filtering by estado or tipo
-  let query = supabase().from("users").select("*, contracts(*)" ,
-    { count: "exact" }
-  );
+  let query = supabase()
+    .from("users")
+    .select("*, contracts(*)", { count: "exact" });
 
   // Apply search filter
   if (search) {
@@ -62,16 +62,33 @@ export async function obtenerUsuariosPaginados(
 
   // Apply contract status filter
   if (estado) {
-    query = query
-      .not('contracts', 'is', null) // Only include users with contracts
-      .eq('contracts.estado', estado?.toLowerCase());
+    console.log("🚀 ~ file: usuarios.service.ts:65 ~ estado:", estado);
+    if (estado === "activo") {
+      query = query
+        .not("contracts", "is", null) // Only include users with contracts
+        .lte("contracts.fecha_inicio", new Date().toISOString())
+        .gte("contracts.fecha_final", new Date().toISOString());
+    } else if (estado === "renovar") {
+      const twoMonthsBeforeEnd = addMonths(new Date(), 2).toISOString();
+      query = query
+        .not("contracts", "is", null) // Only include users with contracts
+        .lte("contracts.fecha_inicio", new Date().toISOString())
+        .lte("contracts.fecha_final", twoMonthsBeforeEnd)
+        .gte("contracts.fecha_final", new Date().toISOString());
+    } else if (estado === "vencido") {
+      query = query
+        .not("contracts", "is", null) // Only include users with contracts
+        .lt("contracts.fecha_final", new Date().toISOString());
+    } else {
+      query = query.not("contracts", "is", null);
+    }
   }
 
   // Apply contract type filter
   if (tipo) {
     query = query
-      .not('contracts', 'is', null) // Only include users with contracts
-      .eq('contracts.tipo', tipo?.toLowerCase());
+      .not("contracts", "is", null) // Only include users with contracts
+      .eq("contracts.tipo", tipo?.toLowerCase());
   }
 
   // Apply sorting
@@ -106,7 +123,6 @@ export async function obtenerUsuarioPorLegajo(legajo: string) {
       .select("*")
       .eq("legajo", legajo)
       .maybeSingle();
-
 
     if (error) return null;
     return data as Usuario;
@@ -148,8 +164,7 @@ export async function actualizarUsuario(
         observaciones: usuario.observaciones,
       })
       .eq("cuil", cuil)
-      .select()
-
+      .select();
 
     if (error) throw error;
     return data[0] as Usuario;

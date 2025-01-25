@@ -4,7 +4,7 @@ export interface PaginationParams {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  estado?: 'activo' | 'vencido';
+  estado?: 'activo' | 'vencido' | 'renovar';
   tipo?: 'activo' | 'jubilado' | 'admin' | 'aduana' | 'other';
 }
 

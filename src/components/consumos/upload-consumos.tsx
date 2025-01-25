@@ -1,24 +1,21 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { procesarArchivoConsumoExtra } from '@/lib/csv-parser';
-import { FileUpload } from '../ui/file-upload';
-import { crearConsumosExtra } from '@/lib/services/consumos.service';
-
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { procesarArchivoConsumoExtra } from "@/lib/csv-parser";
+import { FileUpload } from "../ui/file-upload";
+import { crearConsumosExtra } from "@/lib/services/consumos.service";
 
 export function UploadConsumos() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleFileUpload =  async (file: File)  => {
-
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
-    if (!file.name.endsWith('.csv')) {
+    if (!file.name.endsWith(".csv")) {
       toast({
         title: "Error",
         description: "Por favor, sube un archivo CSV",
@@ -37,7 +34,7 @@ export function UploadConsumos() {
       });
       router.refresh();
     } catch (error) {
-      console.error('Error uploading extras:', error);
+      console.error("Error uploading extras:", error);
       toast({
         title: "Error",
         description: "Hubo un error al cargar los extras",
@@ -45,17 +42,18 @@ export function UploadConsumos() {
       });
     } finally {
       setIsLoading(false);
+      router.refresh();
     }
   };
 
   return (
-        <FileUpload
-            onUpload={handleFileUpload}
-            isLoading={isLoading}
-            accept=".csv"
-            helpText="Formato esperado: codigo, nombre"
-            buttonText="Seleccionar archivo CSV"
-            loadingText="Procesando..."
-          />
-        );
-} 
+    <FileUpload
+      onUpload={handleFileUpload}
+      isLoading={isLoading}
+      accept=".csv"
+      helpText="Formato esperado: codigo, nombre"
+      buttonText="Seleccionar archivo CSV"
+      loadingText="Procesando..."
+    />
+  );
+}
