@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthYearPicker } from "@/components/ui/month-year-picker";
 import { obtenerFacturasDelMes } from "@/lib/services/factura.service";
 import { FacturaCompleta } from "@/lib/types/facturas";
+import { determinarEstadoContrato } from "../../lib/date";
+import { formatearMonto } from "@/lib/utils";
 
 export default function FacturasPage() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -21,7 +23,13 @@ export default function FacturasPage() {
       setLoading(true);
       try {
         const response = await obtenerFacturasDelMes(month, year);
-        setFacturas(response);
+        setFacturas(
+          response.toSorted((a, b) =>
+            a.contracts.users.legajo
+              .padStart(8, "0")
+              .localeCompare(b.contracts.users.legajo.padStart(8, "0"))
+          )
+        );
       } catch (error) {
         console.error("Error fetching bills:", error);
       } finally {
@@ -68,23 +76,24 @@ export default function FacturasPage() {
                 Total de Facturas Activos:{" "}
                 {
                   facturas.filter(
-                    (factura) => factura.contracts.estado === "activo"
+                    (factura) =>
+                      determinarEstadoContrato(
+                        factura.contracts.fecha_inicio
+                      ) === "Activo"
                   ).length
                 }
               </p>
-              <p>Gran Total: ${totalSum.toLocaleString("es")}</p>
-              <p>Total de Extras: ${totalExtras.toLocaleString("es")}</p>
-              <p>Total con Extras: ${totalConExtras.toLocaleString("es")}</p>
+              <p>Gran Total: {formatearMonto(totalSum)}</p>
+              <p>Total de Extras: {formatearMonto(totalExtras)}</p>
+              <p>Total con Extras: {formatearMonto(totalConExtras)}</p>
             </div>
           </div>
-          {/* <Suspense fallback={<div>Cargando...</div>}> */}
           <FacturasTable
             facturas={facturas}
             loading={loading}
             month={month}
             year={year}
           />
-          {/* </Suspense> */}
         </CardContent>
       </Card>
     </div>

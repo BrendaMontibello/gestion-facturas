@@ -129,7 +129,7 @@ export async function aplicarConsumoExtraAFacturas(
           .eq("users.legajo", extra.legajo)
           .order("fecha_inicio", { ascending: false });
 
-        if (contractError) {
+        if (contractError || !contract || contract.length === 0) {
           errores.push(
             `No se encontró contrato para el legajo ${extra.legajo}`
           );

@@ -1,25 +1,25 @@
 "use client";
 
-import { Receipt } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Receipt } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileUpload } from '@/components/ui/file-upload';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { parsearCSVFacturas } from '@/lib/csv-parser';
-import { insertarFacturasBatch } from '@/lib/services/factura.service';
-import { numbersToEnglish, numberToTwoDecimal } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileUpload } from "@/components/ui/file-upload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { insertarFacturasBatch } from "@/lib/services/factura.service";
+import { numbersToEnglish, numberToTwoDecimal } from "@/lib/utils";
 
-import { MonthYearPicker } from '../ui/month-year-picker';
-import { FacturasPreview } from './facturas-preview';
-import { NuevaFactura } from '@/lib/types/facturas';
-import { obtenerUsuarioPorLegajo } from '@/lib/services/usuarios.service';
-import { capitalize } from '../../lib/utils';
-import { startOfMonth } from 'date-fns';
-import { useBlockingLoading } from '@/hooks/use-blocking-loading';
+import { MonthYearPicker } from "../ui/month-year-picker";
+import { FacturasPreview } from "./facturas-preview";
+import { NuevaFactura } from "@/lib/types/facturas";
+import { obtenerUsuarioPorLegajo } from "@/lib/services/usuarios.service";
+import { capitalize } from "../../lib/utils";
+import { startOfMonth } from "date-fns";
+import { useBlockingLoading } from "@/hooks/use-blocking-loading";
+import { parsearExcelFacturas } from "@/lib/excel-parser";
 
 export function UploadFacturas() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,8 +31,15 @@ export function UploadFacturas() {
   const router = useRouter();
   const { startLoading, stopLoading } = useBlockingLoading();
 
-
   const handleFileUpload = async (file: File) => {
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "Por favor, selecciona un archivo.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (impuestos === "0" || gestionDe === "0") {
       toast({
         title: "Error",
@@ -44,12 +51,14 @@ export function UploadFacturas() {
     startLoading("Procesando archivo...");
     setIsLoading(true);
     try {
-      const parsedFacturas = await parsearCSVFacturas(file);
+      const parsedFacturas = await parsearExcelFacturas(file);
       const facturasWithExtras = parsedFacturas.map((factura) => {
         const taxes = numberToTwoDecimal(
-          (factura.monto_total * (numbersToEnglish(impuestos) / 100))
+          factura.monto_total * (numbersToEnglish(impuestos) / 100)
         );
-        const total = numberToTwoDecimal((factura.monto_total + taxes + numbersToEnglish(gestionDe)));
+        const total = numberToTwoDecimal(
+          factura.monto_total + taxes + numbersToEnglish(gestionDe)
+        );
 
         return {
           ...factura,
@@ -60,32 +69,36 @@ export function UploadFacturas() {
         };
       });
       const groupedFacturas = facturasWithExtras
-      .toSorted((a, b) => a.legajo.localeCompare(b.legajo))
-      .reduce((acc, factura) => {
-        const legajo = `${factura.legajo}`;
-        if (!acc[legajo]) {
-          acc[legajo] = [];
-        }
-        acc[legajo].push(factura);
-        return acc;
-      }, {} as Record<string, NuevaFactura[]>);
+        .toSorted((a, b) => a.legajo.localeCompare(b.legajo))
+        .reduce((acc, factura) => {
+          const legajo = `${factura.legajo}`;
+          if (!acc[legajo]) {
+            acc[legajo] = [];
+          }
+          acc[legajo].push(factura);
+          return acc;
+        }, {} as Record<string, NuevaFactura[]>);
 
       const facturasConNombre: Record<string, NuevaFactura[]> = {};
 
       for (const legajo in groupedFacturas) {
         const usuario = await obtenerUsuarioPorLegajo(legajo);
         if (usuario) {
-          facturasConNombre[legajo] = groupedFacturas[legajo].map((factura) => ({
-            ...factura,
-            nombre: capitalize(usuario.nombre),
-          }));
+          facturasConNombre[legajo] = groupedFacturas[legajo].map(
+            (factura) => ({
+              ...factura,
+              nombre: capitalize(usuario.nombre),
+            })
+          );
         }
       }
 
       setFacturas(facturasConNombre);
       toast({
         title: "Archivo procesado",
-        description: `Se han encontrado ${parsedFacturas.length} facturas de ${Object.keys(facturasConNombre).length} usuarios para cargar.`,
+        description: `Se han encontrado ${parsedFacturas.length} facturas de ${
+          Object.keys(facturasConNombre).length
+        } usuarios para cargar.`,
       });
     } catch (error) {
       console.error("Error al procesar el archivo:", error);
@@ -105,7 +118,10 @@ export function UploadFacturas() {
     startLoading("Cargando facturas...");
     setIsLoading(true);
     try {
-      const { uploaded, notUploaded } = await insertarFacturasBatch(facturas, fecha);
+      const { uploaded, notUploaded } = await insertarFacturasBatch(
+        facturas,
+        fecha
+      );
       toast({
         title: "Éxito",
         description: `Se han cargado ${uploaded} facturas correctamente. ${notUploaded} facturas no se pudieron cargar.`,
@@ -176,9 +192,9 @@ export function UploadFacturas() {
         <FileUpload
           onUpload={handleFileUpload}
           isLoading={isLoading}
-          accept=".csv"
-          helpText="Formato esperado: fecha, nro_linea, nombre, legajo, plan, montos..."
-          buttonText="Seleccionar archivo CSV"
+          accept=".xlsx, .xls"
+          helpText="Formato esperado: Nro linea, Usuario, Legajo, Plan, Monto..."
+          buttonText="Seleccionar archivo Excel"
           loadingText="Procesando..."
         />
 
@@ -187,7 +203,6 @@ export function UploadFacturas() {
             facturas={facturas}
             onConfirm={handleConfirmUpload}
             isLoading={isLoading}
-            // fecha={fecha}
           />
         )}
       </CardContent>

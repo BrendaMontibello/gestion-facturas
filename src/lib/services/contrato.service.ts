@@ -4,7 +4,7 @@ import { createClient as supabase } from "../db/client/supabase-client";
 
 import { formatearFechaInicial } from "../utils";
 import { Contrato } from "../types/contratos";
-import { NuevoUsuario, Usuario } from "../types/users";
+import { NuevoUsuario, Usuario, UserType } from "../types/users";
 
 export async function crearContrato(
   usuarioId: string,
@@ -36,23 +36,25 @@ export async function crearContrato(
     // If the latest contract is still valid, do nothing
     return latestContract as Contrato;
   } else {
-    // let estado = 'activo';
-    // if (nuevoUsuario.userType !== 'activo') {
-    //   estado = "cobranza manual";
-    // } else if (fechaFinal && isBefore(fechaFinal, new Date())) {
-    //   estado = "vencido";
-    // }
+    function isValidUserType(userType: string): userType is UserType {
+      return ["activo", "jubilado", "admin", "aduana", "other"].includes(
+        userType
+      );
+    }
+
+    const tipo = isValidUserType(nuevoUsuario.userType)
+      ? nuevoUsuario.userType
+      : "other";
 
     const contrato = {
       user_id: usuarioId,
       fecha_inicio: fechaInicio ?? undefined,
-      fecha_final: fechaFinal ?? undefined,
+      fecha_final: tipo === "activo" ? fechaFinal ?? undefined : undefined,
       entidad: nuevoUsuario.entidad ?? undefined,
       certificado: nuevoUsuario.certificado ?? undefined,
       disponible: nuevoUsuario.disponible ?? undefined,
       rem_mens: nuevoUsuario.rem_mens ?? undefined,
-      // estado,
-      tipo: nuevoUsuario.userType,
+      tipo,
     };
 
     const { data, error } = await supabase()

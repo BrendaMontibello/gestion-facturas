@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
-import { startOfMonth, endOfMonth } from 'date-fns';
-import { createClient as supabase } from '../db/client/supabase-client';
-import { FacturaCompleta, FacturadDelMes, NuevaFactura, NuevaFacturaLinea } from '../types/facturas';
-import { obtenerUsuarioPorLegajo } from './usuarios.service';
-import { calcularCuotaActual } from '../date';
-import { numberToTwoDecimal } from '../utils';
-
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
+import { startOfMonth, endOfMonth } from "date-fns";
+import { createClient as supabase } from "../db/client/supabase-client";
+import {
+  FacturaCompleta,
+  FacturadDelMes,
+  NuevaFactura,
+  NuevaFacturaLinea,
+} from "../types/facturas";
+import { obtenerUsuarioPorLegajo } from "./usuarios.service";
+import { calcularCuotaActual } from "../date";
+import { numberToTwoDecimal } from "../utils";
 
 export async function obtenerFacturasDelMes(
   month: number,
@@ -17,9 +21,9 @@ export async function obtenerFacturasDelMes(
   const endDate = endOfMonth(new Date(year, month - 1, 1));
 
   const { data, error } = await supabase()
-  .from("bills_mensuales")
-  .select(
-    `
+    .from("bills_mensuales")
+    .select(
+      `
     *,
     bills: bills(*),
     extras: bill_extras(
@@ -33,7 +37,7 @@ export async function obtenerFacturasDelMes(
       entidad,
       certificado,
       disponible,
-      estado,
+      tipo,
       users: users(
         legajo,
         nombre,
@@ -42,29 +46,28 @@ export async function obtenerFacturasDelMes(
       )
     )
     `
-        )
-        
+    )
+
     .gte("fecha", startDate.toISOString())
-    .lte("fecha", endDate.toISOString())
-    // .order('contracts.users.legajo', { ascending: true });
-    
+    .lte("fecha", endDate.toISOString());
+  // .order('contracts.users.legajo', { ascending: true });
+
   if (error) {
     console.error("Error fetching bills:", error);
     throw error;
   }
   if (data.length === 0) return [];
 
-  return data
+  return data;
 }
 
 export async function obtenerFacturasMensualesPorContrato(
   contractId: string
 ): Promise<FacturaCompleta[]> {
-
-  const {data: billsMensuales, error: billsMensualesError} = await supabase()
-  .from("bills_mensuales")
-  .select(
-    `
+  const { data: billsMensuales, error: billsMensualesError } = await supabase()
+    .from("bills_mensuales")
+    .select(
+      `
      *,
      bills: bills(*),
      extras: bill_extras(
@@ -78,7 +81,7 @@ export async function obtenerFacturasMensualesPorContrato(
        entidad,
        certificado,
        disponible,
-       estado,
+       tipo,
        users: users!inner(
          legajo,
          nombre,
@@ -87,8 +90,9 @@ export async function obtenerFacturasMensualesPorContrato(
        )
      )
          `
-       ) .eq("contracts.id", contractId)
-    
+    )
+    .eq("contracts.id", contractId);
+
   if (billsMensualesError) {
     console.error("Error fetching bills:", billsMensualesError);
     throw billsMensualesError;
@@ -98,13 +102,12 @@ export async function obtenerFacturasMensualesPorContrato(
 }
 
 export async function obtenerFacturasPorFacturaMensualId(
-facturaMensualId: string
+  facturaMensualId: string
 ): Promise<FacturaCompleta> {
-
   const { data, error } = await supabase()
-  .from("bills_mensuales")
-  .select(
-     `
+    .from("bills_mensuales")
+    .select(
+      `
       *,
       bills: bills(*),
       extras: bill_extras(
@@ -117,6 +120,7 @@ facturaMensualId: string
         fecha_inicio,
         entidad,
         certificado,
+        tipo,
         users: users(
           legajo,
           nombre,
@@ -125,27 +129,30 @@ facturaMensualId: string
         )
       )
           `
-        )
-        .eq("id", facturaMensualId)
-        .maybeSingle();
+    )
+    .eq("id", facturaMensualId)
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching bills:", error);
     throw error;
   }
-  
+
   return data;
 }
 
 export async function insertarFacturasBatch(
   facturas: Record<string, NuevaFactura[]>,
   fecha: Date
-): Promise<{ uploaded: number; notUploaded: number; errors: Record<string, Error> }> {
+): Promise<{
+  uploaded: number;
+  notUploaded: number;
+  errors: Record<string, Error>;
+}> {
   const errors: Record<string, Error> = {};
   let uploadedCount = 0;
   let notUploadedCount = 0;
 
-  
   for (const [legajo, userFacturas] of Object.entries(facturas)) {
     try {
       const user = await obtenerUsuarioPorLegajo(legajo);
@@ -156,11 +163,11 @@ export async function insertarFacturasBatch(
       }
       // Now find the latest contract for the user using user_id
       const { data: contract, error: contractError } = await supabase()
-      .from("contracts")
-      .select("id, users!inner(id)")
-      .eq("users.id", user.id) // Use user.legajo to find the contract
-      .order("fecha_inicio", { ascending: false })
-      
+        .from("contracts")
+        .select("id, users!inner(id)")
+        .eq("users.id", user.id) // Use user.legajo to find the contract
+        .order("fecha_inicio", { ascending: false });
+
       if (contractError || contract.length === 0) {
         console.warn(`No contract found for ${legajo}. Skipping.`);
         notUploadedCount += userFacturas.length;
@@ -169,24 +176,24 @@ export async function insertarFacturasBatch(
 
       let facturaMensualId: string;
 
-      const { data: facturaMensual, error: facturaMensualError } = await supabase()
-      .from("bills_mensuales")
-      .select("id")
-      .eq("contract_id", contract[0].id)
-      .eq("fecha", fecha.toISOString())
+      const { data: facturaMensual, error: facturaMensualError } =
+        await supabase()
+          .from("bills_mensuales")
+          .select("id")
+          .eq("contract_id", contract[0].id)
+          .eq("fecha", fecha.toISOString());
 
-
-      if (facturaMensualError && facturaMensualError.code !== 'PGRST116') {
+      if (facturaMensualError && facturaMensualError.code !== "PGRST116") {
         console.warn(`factura mensual errorfound for ${legajo}. Skipping.`);
         notUploadedCount += userFacturas.length;
         continue;
-      };
+      }
 
       if (!facturaMensual || facturaMensual.length === 0) {
         facturaMensualId = await crearFacturaMensual(contract[0].id, fecha);
       } else {
         facturaMensualId = facturaMensual[0].id;
-      } 
+      }
 
       // Upload each factura to the found contract
       for (const factura of userFacturas) {
@@ -204,25 +211,35 @@ export async function insertarFacturasBatch(
     console.error("Some facturas could not be uploaded:", errors);
   }
 
-  return { uploaded: uploadedCount, notUploaded: notUploadedCount, errors: errors };
+  return {
+    uploaded: uploadedCount,
+    notUploaded: notUploadedCount,
+    errors: errors,
+  };
 }
 
-export async function crearFacturaMensual(contract_id: string, fecha: Date): Promise<string> {
+export async function crearFacturaMensual(
+  contract_id: string,
+  fecha: Date
+): Promise<string> {
   const { data, error } = await supabase()
     .from("bills_mensuales")
     .insert({ contract_id, fecha })
-    .select('id')
+    .select("id")
     .maybeSingle();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data?.id;
+  return data?.id;
 }
 
-export async function insertarFacturaPorFacturaMensualId(facturaMensualId: string, factura: NuevaFacturaLinea) {
+export async function insertarFacturaPorFacturaMensualId(
+  facturaMensualId: string,
+  factura: NuevaFacturaLinea
+) {
   const { data, error } = await supabase()
     .from("bills")
-    .insert({    
+    .insert({
       nro_linea: factura.nro_linea,
       plan: factura.plan,
       monto_valor: factura.monto_valor,
@@ -237,55 +254,63 @@ export async function insertarFacturaPorFacturaMensualId(facturaMensualId: strin
       monto_total: factura.monto_total,
       impuestos: factura.impuestos,
       gestion_de: factura.gestion_de,
-      total: factura.total, 
-      factura_mensual_id: facturaMensualId })
-    .select('id')
+      total: factura.total,
+      factura_mensual_id: facturaMensualId,
+    })
+    .select("id");
 
+  if (error) throw error;
 
-    if (error) throw error;
-
-    return data[0].id;
+  return data[0].id;
 }
 
 export const getFacturaSubTotal = (factura: FacturaCompleta) => {
-  const subtotal = factura.bills.map(bill => bill.monto_total).reduce((a, b) => a + b, 0);
+  const subtotal = factura.bills
+    .map((bill) => bill.monto_total)
+    .reduce((a, b) => a + b, 0);
   return numberToTwoDecimal(subtotal);
-}
+};
 
 export const getFacturaExtras = (factura: FacturaCompleta) => {
-  const extras = factura.extras?.map(extra => extra.monto).reduce((a, b) => a + b, 0) ?? 0;
+  const extras =
+    factura.extras?.map((extra) => extra.monto).reduce((a, b) => a + b, 0) ?? 0;
   return numberToTwoDecimal(extras);
-}
+};
 
 export const getFacturaImpuestos = (factura: FacturaCompleta) => {
-  const impuestos = factura.bills.map(bill => bill.impuestos).reduce((a, b) => a + b, 0);
+  const impuestos = factura.bills
+    .map((bill) => bill.impuestos)
+    .reduce((a, b) => a + b, 0);
   return numberToTwoDecimal(impuestos);
-}
+};
 
 export const getFacturaGestion = (factura: FacturaCompleta) => {
-  const gestion = factura.bills.map(bill => bill.gestion_de).reduce((a, b) => a + b, 0);
+  const gestion = factura.bills
+    .map((bill) => bill.gestion_de)
+    .reduce((a, b) => a + b, 0);
   return numberToTwoDecimal(gestion);
-}
+};
 
 export const getFacturaExcedente = (factura: FacturaCompleta) => {
   const disponible = factura.contracts.disponible ?? 0;
   const subtotal = getFacturaSubTotal(factura);
   const extras = getFacturaExtras(factura);
-  const excedente = (subtotal + extras) - disponible;
+  const excedente = subtotal + extras - disponible;
   return Math.max(0, numberToTwoDecimal(excedente));
-}
+};
 
 export const getFacturaTotal = (factura: FacturaCompleta) => {
   const subtotal = getFacturaSubTotal(factura);
   const impuestos = getFacturaImpuestos(factura);
   const gestion = getFacturaGestion(factura);
   const extras = getFacturaExtras(factura);
-  let total = subtotal + extras + impuestos + gestion - getFacturaExcedente(factura);
-  if (factura.contracts.estado === 'cobranza manual') {
+  let total =
+    subtotal + extras + impuestos + gestion - getFacturaExcedente(factura);
+  if (factura.contracts.tipo !== "activo") {
     total = subtotal + extras + impuestos + gestion;
   }
   return numberToTwoDecimal(total);
-}
+};
 
 export async function downloadBillsInCsvFile(
   facturas: any[],
@@ -361,7 +386,10 @@ export async function downloadBillsInExcelFile(
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas");
-  XLSX.writeFile(workbook, `facturas_${month.toString().padStart(2, '0')}_${year}.xlsx`);
+  XLSX.writeFile(
+    workbook,
+    `facturas_${month.toString().padStart(2, "0")}_${year}.xlsx`
+  );
 }
 
 export async function downloadBillsInExcelFileporLegajo(
@@ -369,9 +397,8 @@ export async function downloadBillsInExcelFileporLegajo(
   month: number,
   year: number
 ) {
-
-  const data = facturas.toSorted((a, b) => a.contracts.users.legajo.padStart(8, '0').localeCompare(b.contracts.users.legajo.padStart(8, '0'))).map(( factura) => {
-    const isActivo = factura.contracts.estado === 'activo';
+  const data = facturas.map((factura) => {
+    const isActivo = factura.contracts.tipo === "activo";
     const subtotal = getFacturaSubTotal(factura);
     const impuestos = getFacturaImpuestos(factura);
     const gestion = getFacturaGestion(factura);
@@ -384,13 +411,15 @@ export async function downloadBillsInExcelFileporLegajo(
       Nombre: factura.contracts.users.nombre,
       Apellido: factura.contracts.users.apellido,
       Cuil: factura.contracts.users.cuil,
-      Cuota: isActivo ? calcularCuotaActual(factura.contracts.fecha_inicio) : 'N/A',
-      Disponible: isActivo ? numberToTwoDecimal(disponible) : 'N/A',
+      Cuota: isActivo
+        ? calcularCuotaActual(factura.contracts.fecha_inicio)
+        : "N/A",
+      Disponible: isActivo ? numberToTwoDecimal(disponible) : "N/A",
       Subtotal: numberToTwoDecimal(subtotal),
       Impuestos: numberToTwoDecimal(impuestos),
       Gestion: numberToTwoDecimal(gestion),
       Extras: numberToTwoDecimal(extras),
-      Excedente: isActivo ? numberToTwoDecimal(excedente) : 'N/A',
+      Excedente: isActivo ? numberToTwoDecimal(excedente) : "N/A",
       Total: numberToTwoDecimal(total),
     };
   });
@@ -398,8 +427,10 @@ export async function downloadBillsInExcelFileporLegajo(
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas");
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Facturas 2");
-  XLSX.writeFile(workbook, `facturas_legajos_${month.toString().padStart(2, '0')}_${year}.xlsx`);
+  XLSX.writeFile(
+    workbook,
+    `facturas_legajos_${month.toString().padStart(2, "0")}_${year}.xlsx`
+  );
 }
 
 export async function downloadBillsInTxtFile(
@@ -407,19 +438,34 @@ export async function downloadBillsInTxtFile(
   month: number,
   year: number
 ) {
-  const data = facturas.filter(factura => factura.contracts.estado === 'activo')
+  const data = facturas
+    .filter((factura) => factura.contracts.tipo === "activo")
     .map((factura) => {
-      const newImporte = (Math.round(getFacturaTotal(factura) * 100)).toString().padStart(13, "0");
+      const newImporte = Math.round(getFacturaTotal(factura) * 100)
+        .toString()
+        .padStart(13, "0");
       if (parseInt(newImporte) <= 0) return;
       const fecha = new Date(factura.contracts.fecha_inicio);
-      const fechaAlta = `${(fecha.getDate() + 1).toString().padStart(2, "0")}${(fecha.getMonth() + 1).toString().padStart(2, "0")}${fecha.getFullYear()}`;
+      const fechaAlta = `${(fecha.getDate() + 1).toString().padStart(2, "0")}${(
+        fecha.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}${fecha.getFullYear()}`;
       const fechaFacturacion = new Date(`${year}-${month}-01`);
-      const fechaFactura = `10${(fechaFacturacion.getMonth() + 1).toString().padStart(2, "0")}${fechaFacturacion.getFullYear()}`;
-      const fechaVencimiento = `28${(fechaFacturacion.getMonth() + 1).toString().padStart(2, "0")}${fechaFacturacion.getFullYear()}`;
-      const fechaVencimientoPresentacion = `28${(fechaFacturacion.getMonth() + 1).toString().padStart(2, "0")}${
-        fechaFacturacion.getFullYear() + 1
-      }`;
-      const newCuota = calcularCuotaActual(factura.contracts.fecha_inicio).toString().padStart(3, "0");
+      const fechaFactura = `10${(fechaFacturacion.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}${fechaFacturacion.getFullYear()}`;
+      const fechaVencimiento = `28${(fechaFacturacion.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}${fechaFacturacion.getFullYear()}`;
+      const fechaVencimientoPresentacion = `28${(
+        fechaFacturacion.getMonth() + 1
+      )
+        .toString()
+        .padStart(2, "0")}${fechaFacturacion.getFullYear() + 1}`;
+      const newCuota = calcularCuotaActual(factura.contracts.fecha_inicio)
+        .toString()
+        .padStart(3, "0");
 
       return `0000000000000000${fechaFactura}0000${factura.contracts.users.cuil}0000000000${newCuota}${newImporte}${fechaVencimiento}0000000000000000000000000000000000000000${factura.contracts.entidad}${newImporte}012${fechaAlta}0000000000000000001${fechaVencimientoPresentacion}${factura.contracts.certificado}00000000000000000000`;
     })
@@ -430,7 +476,7 @@ export async function downloadBillsInTxtFile(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `facturas_${month.toString().padStart(2, '0')}_${year}.txt`;
+  a.download = `facturas_${month.toString().padStart(2, "0")}_${year}.txt`;
   a.click();
   URL.revokeObjectURL(url);
 }

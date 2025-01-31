@@ -1,14 +1,14 @@
 "use client";
 
-import { Upload } from 'lucide-react';
-import { useState } from 'react';
+import { Upload } from "lucide-react";
+import { useState } from "react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileUpload } from '@/components/ui/file-upload';
-import { UsuariosPreview } from '@/components/usuarios/usuarios-preview';
-import { useToast } from '@/hooks/use-toast';
-import { parsearUsuariosCSV } from '@/lib/csv-parser';
-import { NuevoUsuario } from '@/lib/types/users';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileUpload } from "@/components/ui/file-upload";
+import { UsuariosPreview } from "@/components/usuarios/usuarios-preview";
+import { useToast } from "@/hooks/use-toast";
+import { NuevoUsuario } from "@/lib/types/users";
+import { parsearUsuariosExcel } from "@/lib/excel-parser";
 
 export default function CargarUsuarios() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,9 +16,30 @@ export default function CargarUsuarios() {
   const { toast } = useToast();
 
   const handleFileUpload = async (file: File) => {
-    setIsLoading(true);
     try {
-      const parsedUsuarios = await parsearUsuariosCSV(file);
+      setUsuarios([]);
+      setIsLoading(true);
+      const parsedUsuarios = await parsearUsuariosExcel(file);
+      const legajoCount = parsedUsuarios.reduce<Record<string, number>>(
+        (acc, usuario) => {
+          acc[usuario.legajo] = (acc[usuario.legajo] || 0) + 1;
+          return acc;
+        },
+        {}
+      );
+
+      const duplicateLegajos = Object.keys(legajoCount).filter(
+        (legajo) => legajoCount[legajo] > 1
+      );
+
+      if (duplicateLegajos.length > 0) {
+        alert(
+          `Los siguientes legajos están duplicados: ${duplicateLegajos.join(
+            ", "
+          )}`
+        );
+      }
+
       setUsuarios(parsedUsuarios);
       toast({
         title: "Archivo procesado",
@@ -58,9 +79,9 @@ export default function CargarUsuarios() {
           <FileUpload
             onUpload={handleFileUpload}
             isLoading={isLoading}
-            accept=".csv"
-            helpText="Formato esperado: legajo, cuil, certificado, entidad, fecha, cuota, disponible, ret mens, apellido y nombre"
-            buttonText="Seleccionar archivo CSV"
+            accept=".xlsx, .xls"
+            helpText="Formato esperado: LEGAJO, CUIL, CERTIFICADO, ENTIDAD, FECHA, CUOTA, DISPONIBLE, REM MES, APELLIDO Y NOMBRE"
+            buttonText="Seleccionar archivo Excel"
             loadingText="Procesando..."
           />
           {usuarios.length > 0 && (

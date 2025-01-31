@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Alert } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-} from '@/components/ui/table';
-import { crearContrato } from '@/lib/services/contrato.service';
-import { insertarUsuario } from '@/lib/services/usuarios.service';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { crearContrato } from "@/lib/services/contrato.service";
+import { insertarUsuario } from "@/lib/services/usuarios.service";
 
-import { capitalize, formatearFechaInicial } from '@/lib/utils';
-import { NuevoUsuario } from '@/lib/types/users';
-import { useBlockingLoading } from '@/hooks/use-blocking-loading';
+import { capitalize, formatearFechaInicial } from "@/lib/utils";
+import { NuevoUsuario } from "@/lib/types/users";
+import { useBlockingLoading } from "@/hooks/use-blocking-loading";
 
 interface UsuariosPreviewProps {
   usuarios: NuevoUsuario[];
@@ -25,8 +30,9 @@ export function UsuariosPreview({
 }: Readonly<UsuariosPreviewProps>) {
   const [loading, setLoading] = useState(false);
   const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
+  const [usersToShow, setUsersToShow] = useState<NuevoUsuario[]>(usuarios);
   const [showAlert, setShowAlert] = useState(false);
-  const { startLoading, stopLoading } = useBlockingLoading(); 
+  const { startLoading, stopLoading } = useBlockingLoading();
 
   const handleUpload = async () => {
     startLoading("Cargando usuarios...");
@@ -35,14 +41,33 @@ export function UsuariosPreview({
     try {
       for (const usuario of usuarios) {
         try {
+          if (
+            usuario.userType === "activo" &&
+            (!usuario.fecha ||
+              !usuario.certificado ||
+              !usuario.disponible ||
+              !usuario.rem_mens ||
+              !usuario.entidad ||
+              !usuario.cuil ||
+              !usuario.apellido ||
+              !usuario.nombre ||
+              !usuario.legajo)
+          ) {
+            errors[usuario.legajo] = true;
+            continue;
+          }
           const user = await insertarUsuario(usuario);
           await crearContrato(user.id, usuario);
           errors[usuario.legajo] = false;
         } catch (error) {
-          console.error(`Error uploading usuario for ${usuario.legajo}:`, error);
+          console.error(
+            `Error uploading usuario for ${usuario.legajo}:`,
+            error
+          );
           errors[usuario.legajo] = true;
         }
       }
+      setUsersToShow(usuarios.filter((usuario) => !errors[usuario.legajo]));
       setErrorUsers(errors);
       setShowAlert(Object.values(errors).some((hasError) => hasError));
       onConfirm();
@@ -65,7 +90,8 @@ export function UsuariosPreview({
     <div>
       {showAlert && (
         <Alert variant="destructive" className="mb-4">
-          Algunos usuarios no pudieron ser cargados. Revise los errores.
+          Algunos usuarios no pudieron ser cargados. Revise los errores e
+          intente con un nuevo archivo con sólo los usuarios que tienen errores.
         </Alert>
       )}
       <Table>
@@ -84,12 +110,16 @@ export function UsuariosPreview({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {usuarios.map((usuario) => {
+          {usersToShow.map((usuario) => {
             const invalidCuil = isInvalidCuil(usuario.cuil);
             const invalidDate = isInvalidDate(usuario.fecha);
             const uploadError = errorUsers[usuario.legajo];
             const rowClass =
-              invalidCuil || (invalidDate && usuario.userType === "activo") || uploadError ? "bg-red-100" : "";
+              invalidCuil ||
+              (invalidDate && usuario.userType === "activo") ||
+              uploadError
+                ? "bg-red-100"
+                : "";
 
             return (
               <TableRow key={usuario.legajo} className={rowClass}>
@@ -112,7 +142,11 @@ export function UsuariosPreview({
           })}
         </TableBody>
       </Table>
-      <Button onClick={handleUpload} disabled={loading} className="mt-4">
+      <Button
+        onClick={handleUpload}
+        disabled={loading || showAlert}
+        className="mt-4"
+      >
         {loading ? "Cargando..." : "Confirmar carga"}
       </Button>
     </div>

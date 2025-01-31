@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,19 +11,24 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { FacturaCompleta } from '@/lib/types/facturas';
-import { calcularCuotaActual, formatearFechaParaMostrar } from '@/lib/date';
-import { getFacturaExtras, getFacturaGestion, getFacturaImpuestos, getFacturaSubTotal } from '@/lib/services/factura.service';
+} from "@/components/ui/table";
+import { FacturaCompleta } from "@/lib/types/facturas";
+import { calcularCuotaActual, formatearFechaParaMostrar } from "@/lib/date";
+import {
+  getFacturaExtras,
+  getFacturaGestion,
+  getFacturaImpuestos,
+  getFacturaSubTotal,
+} from "@/lib/services/factura.service";
+import { formatearMonto } from "@/lib/utils";
 
-export function FacturasMensualesTable({ 
-  facturasMensuales 
-}: Readonly<{ 
-  facturasMensuales: FacturaCompleta[]
+export function FacturasMensualesTable({
+  facturasMensuales,
+}: Readonly<{
+  facturasMensuales: FacturaCompleta[];
 }>) {
-
-
-  if (facturasMensuales.length === 0) return <div>No hay facturas mensuales</div>;
+  if (facturasMensuales.length === 0)
+    return <div>No hay facturas mensuales</div>;
 
   return (
     <Table>
@@ -44,15 +49,46 @@ export function FacturasMensualesTable({
       <TableBody>
         {facturasMensuales.map((facturaMensual) => (
           <TableRow key={facturaMensual.id}>
-            <TableCell>{formatearFechaParaMostrar(facturaMensual.fecha)}</TableCell>
-            <TableCell>{facturaMensual.contracts.estado === 'activo' ? calcularCuotaActual(facturaMensual.contracts.fecha_inicio) : ''}</TableCell>
-            <TableCell>{facturaMensual.contracts.disponible ? facturaMensual.contracts.disponible.toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'}) : ''}</TableCell>
-            <TableCell>{getFacturaSubTotal(facturaMensual).toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'})}</TableCell>
-            <TableCell>{getFacturaImpuestos(facturaMensual).toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'})}</TableCell>
-            <TableCell>{getFacturaGestion(facturaMensual).toLocaleString('es', {currencyDisplay: 'narrowSymbol',signDisplay: 'negative', minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'})}</TableCell>
-            <TableCell>{(getFacturaSubTotal(facturaMensual) + getFacturaGestion(facturaMensual) + getFacturaImpuestos(facturaMensual)).toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'})}</TableCell>
-            <TableCell>{getFacturaExtras(facturaMensual).toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency', currency: 'ARS'})}</TableCell>
-            <TableCell>{(getFacturaSubTotal(facturaMensual) + getFacturaGestion(facturaMensual) + getFacturaImpuestos(facturaMensual) + getFacturaExtras(facturaMensual)).toLocaleString('es', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+            <TableCell>
+              {formatearFechaParaMostrar(facturaMensual.fecha)}
+            </TableCell>
+            <TableCell>
+              {facturaMensual.contracts.tipo === "activo"
+                ? calcularCuotaActual(facturaMensual.contracts.fecha_inicio)
+                : ""}
+            </TableCell>
+            <TableCell>
+              {facturaMensual.contracts.disponible
+                ? formatearMonto(facturaMensual.contracts.disponible)
+                : ""}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(getFacturaSubTotal(facturaMensual))}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(getFacturaImpuestos(facturaMensual))}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(getFacturaGestion(facturaMensual))}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(
+                getFacturaSubTotal(facturaMensual) +
+                  getFacturaGestion(facturaMensual) +
+                  getFacturaImpuestos(facturaMensual)
+              )}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(getFacturaExtras(facturaMensual))}
+            </TableCell>
+            <TableCell>
+              {formatearMonto(
+                getFacturaSubTotal(facturaMensual) +
+                  getFacturaGestion(facturaMensual) +
+                  getFacturaImpuestos(facturaMensual) +
+                  getFacturaExtras(facturaMensual)
+              )}
+            </TableCell>
             <TableCell>
               <Link href={`/facturas/${facturaMensual.id}`}>
                 <Button variant="ghost" size="icon">
@@ -65,4 +101,4 @@ export function FacturasMensualesTable({
       </TableBody>
     </Table>
   );
-} 
+}

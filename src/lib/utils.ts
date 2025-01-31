@@ -52,14 +52,21 @@ export function formatearFecha(fecha: string): string {
 
 export function formatearMonto(monto: number): string {
   return new Intl.NumberFormat("es-AR", {
-    style: "decimal",
+    style: "currency",
     currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    trailingZeroDisplay: "auto",
+    currencyDisplay: "narrowSymbol",
   }).format(monto);
 }
 
-export function numbersToEnglish(number: string): number {
+export function numbersToEnglish(number: string | number): number {
   // Replace the dot with an empty string and the comma with a dot
-  const normalizedNumber = number?.replace(/\./g, "").replace(",", ".");
+  const normalizedNumber = number
+    ?.toString()
+    .replace(/\./g, "")
+    .replace(",", ".");
   const parsedNumber = normalizedNumber ? parseFloat(normalizedNumber) : 0;
   return numberToTwoDecimal(parsedNumber);
 }
