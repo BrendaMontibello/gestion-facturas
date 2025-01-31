@@ -1,6 +1,5 @@
 "use client";
 
-// import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -18,29 +17,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
 import { Button } from "../ui/button";
 import { NuevaFactura } from "@/lib/types/facturas";
+import { formatearMonto } from "@/lib/utils";
 
 interface FacturasPreviewProps {
   facturas: Record<string, NuevaFactura[]>;
   onConfirm: () => Promise<void>;
   isLoading: boolean;
-  // fecha: Date;
 }
 
 export function FacturasPreview({
   facturas,
   onConfirm,
   isLoading,
-  // fecha,
 }: Readonly<FacturasPreviewProps>) {
   const [currentPage, setCurrentPage] = useState(1);
   const facturasPerPage = 50;
 
-  const totalPages = Math.ceil(
-    Object.keys(facturas).length / facturasPerPage
-  );
+  const totalPages = Math.ceil(Object.keys(facturas).length / facturasPerPage);
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
@@ -53,22 +48,6 @@ export function FacturasPreview({
     currentPage * facturasPerPage
   );
 
-  // const handleUserUpload = async (
-  //   nombre: string,
-  //   userFacturas: NuevaFactura[]
-  // ) => {
-  //   setLoadingUsers((prev) => ({ ...prev, [nombre]: true }));
-  //   try {
-  //     await insertarFacturaUsuarioBatch(userFacturas, fecha);
-  //     setErrorUsers((prev) => ({ ...prev, [nombre]: false }));
-  //   } catch (error) {
-  //     console.error(`Error uploading facturas for ${nombre}:`, error);
-  //     setErrorUsers((prev) => ({ ...prev, [nombre]: true }));
-  //   } finally {
-  //     setLoadingUsers((prev) => ({ ...prev, [nombre]: false }));
-  //   }
-  // };
-
   const handleConfirm = async () => {
     onConfirm();
   };
@@ -80,10 +59,7 @@ export function FacturasPreview({
           <AccordionItem key={legajo} value={legajo}>
             <AccordionTrigger>
               <h3 className="text-lg font-semibold flex items-center">
-                {`${userFacturas[0].nombre} - ${userFacturas[0].legajo}`}
-                {/* {errorUsers[nombre] && (
-                  <AlertCircle className="ml-2 text-red-500" />
-                )} */}
+                {`${userFacturas[0].nombre} - Legajo: ${userFacturas[0].legajo} - Planes: ${userFacturas.length}`}
               </h3>
             </AccordionTrigger>
             <AccordionContent>
@@ -109,62 +85,48 @@ export function FacturasPreview({
                 </TableHeader>
                 <TableBody>
                   {userFacturas.map((factura) => (
-                    <TableRow key={factura.legajo+factura.nro_linea}>
+                    <TableRow key={factura.legajo + factura.nro_linea}>
                       <TableCell>{factura.nro_linea}</TableCell>
                       <TableCell>{factura.plan}</TableCell>
                       <TableCell>
-                        ${factura.monto_valor.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_valor)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_servic.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_servic)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_bonifi.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_bonifi)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_llama.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_llama)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_llamcd.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_llamcd)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_roami.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_roami)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_mens.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {formatearMonto(factura.monto_mens)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_datos.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
+                        {formatearMonto(factura.monto_datos)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_otros.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
+                        {formatearMonto(factura.monto_otros)}
                       </TableCell>
                       <TableCell>
-                        ${factura.monto_total.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
+                        {formatearMonto(factura.monto_total)}
                       </TableCell>
+                      <TableCell>{formatearMonto(factura.impuestos)}</TableCell>
                       <TableCell>
-                        ${factura.impuestos.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
+                        {formatearMonto(factura.gestion_de)}
                       </TableCell>
-                      <TableCell>
-                        ${factura.gestion_de.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
-                      </TableCell>
-                      <TableCell>
-                        ${factura.total.toLocaleString("es", {minimumFractionDigits: 2, maximumFractionDigits: 2} )}
-                      </TableCell>
+                      <TableCell>{formatearMonto(factura.total)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {/* {errorUsers[nombre] && (
-                // <Button
-                //   onClick={() => handleUserUpload(nombre, userFacturas)}
-                //   disabled={loadingUsers[nombre]}
-                //   className="mt-2"
-                // >
-                //   Retry
-                // </Button>
-                <p className="text-red-500">Error al cargar las facturas</p>
-              )} */}
             </AccordionContent>
           </AccordionItem>
         ))}

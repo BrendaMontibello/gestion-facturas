@@ -14,13 +14,13 @@ import {
 } from "@/components/ui/table";
 import { FacturaCompleta } from "@/lib/types/facturas";
 import { calcularCuotaActual, formatearFechaParaMostrar } from "@/lib/date";
+import { formatearMonto } from "@/lib/utils";
 import {
   getFacturaExtras,
   getFacturaGestion,
   getFacturaImpuestos,
   getFacturaSubTotal,
-} from "@/lib/services/factura.service";
-import { formatearMonto } from "@/lib/utils";
+} from "@/lib/factura-utils";
 
 export function FacturasMensualesTable({
   facturasMensuales,

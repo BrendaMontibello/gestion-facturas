@@ -42,7 +42,7 @@ export default function FacturasPage() {
 
   const totalSum = facturas.reduce(
     (sum, factura) =>
-      sum + factura.bills.reduce((sum, bill) => sum + bill.monto_valor, 0),
+      sum + factura.bills.reduce((sum, bill) => sum + bill.total, 0),
     0
   );
   const totalExtras = facturas.reduce(

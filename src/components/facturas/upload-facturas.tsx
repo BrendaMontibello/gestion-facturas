@@ -9,14 +9,15 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { insertarFacturasBatch } from "@/lib/services/factura.service";
+import {
+  insertarFacturasBatch,
+  obtenerFacturasConNombre,
+} from "@/lib/services/factura.service";
 import { numbersToEnglish, numberToTwoDecimal } from "@/lib/utils";
 
 import { MonthYearPicker } from "../ui/month-year-picker";
 import { FacturasPreview } from "./facturas-preview";
 import { NuevaFactura } from "@/lib/types/facturas";
-import { obtenerUsuarioPorLegajo } from "@/lib/services/usuarios.service";
-import { capitalize } from "../../lib/utils";
 import { startOfMonth } from "date-fns";
 import { useBlockingLoading } from "@/hooks/use-blocking-loading";
 import { parsearExcelFacturas } from "@/lib/excel-parser";
@@ -79,19 +80,9 @@ export function UploadFacturas() {
           return acc;
         }, {} as Record<string, NuevaFactura[]>);
 
-      const facturasConNombre: Record<string, NuevaFactura[]> = {};
-
-      for (const legajo in groupedFacturas) {
-        const usuario = await obtenerUsuarioPorLegajo(legajo);
-        if (usuario) {
-          facturasConNombre[legajo] = groupedFacturas[legajo].map(
-            (factura) => ({
-              ...factura,
-              nombre: capitalize(usuario.nombre),
-            })
-          );
-        }
-      }
+      const { facturasConNombre } = await obtenerFacturasConNombre(
+        groupedFacturas
+      );
 
       setFacturas(facturasConNombre);
       toast({

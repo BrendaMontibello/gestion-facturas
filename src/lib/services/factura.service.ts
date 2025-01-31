@@ -1,8 +1,11 @@
+"use server";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Papa from "papaparse";
+// import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { createClient as supabase } from "../db/client/supabase-client";
+
 import {
   FacturaCompleta,
   FacturadDelMes,
@@ -11,7 +14,15 @@ import {
 } from "../types/facturas";
 import { obtenerUsuarioPorLegajo } from "./usuarios.service";
 import { calcularCuotaActual } from "../date";
-import { numberToTwoDecimal } from "../utils";
+import { capitalize, numberToTwoDecimal } from "../utils";
+import {
+  getFacturaTotal,
+  getFacturaExcedente,
+  getFacturaImpuestos,
+  getFacturaExtras,
+  getFacturaGestion,
+  getFacturaSubTotal,
+} from "../factura-utils";
 
 export async function obtenerFacturasDelMes(
   month: number,
@@ -34,6 +45,7 @@ export async function obtenerFacturasDelMes(
     ),
     contracts: contracts(
       fecha_inicio,
+      fecha_final,
       entidad,
       certificado,
       disponible,
@@ -139,6 +151,22 @@ export async function obtenerFacturasPorFacturaMensualId(
   }
 
   return data;
+}
+
+export async function obtenerFacturasConNombre(
+  groupedFacturas: Record<string, NuevaFactura[]>
+): Promise<{ facturasConNombre: Record<string, NuevaFactura[]> }> {
+  const facturasConNombre: Record<string, NuevaFactura[]> = {};
+  for (const legajo in groupedFacturas) {
+    const usuario = await obtenerUsuarioPorLegajo(legajo);
+    if (usuario) {
+      facturasConNombre[legajo] = groupedFacturas[legajo].map((factura) => ({
+        ...factura,
+        nombre: capitalize(usuario.nombre),
+      }));
+    }
+  }
+  return { facturasConNombre };
 }
 
 export async function insertarFacturasBatch(
@@ -264,95 +292,49 @@ export async function insertarFacturaPorFacturaMensualId(
   return data[0].id;
 }
 
-export const getFacturaSubTotal = (factura: FacturaCompleta) => {
-  const subtotal = factura.bills
-    .map((bill) => bill.monto_total)
-    .reduce((a, b) => a + b, 0);
-  return numberToTwoDecimal(subtotal);
-};
+// export async function downloadBillsInCsvFile(
+//   facturas: FacturadDelMes[],
+//   month: number,
+//   year: number
+// ) {
+//   // Map the data to match the headers
+//   const data = facturas.map((factura) => ({
+//     Legajo: factura.bills_mensuales.contracts.users.legajo,
+//     Cuil: factura.bills_mensuales.contracts.users.cuil,
+//     Nombre: factura.bills_mensuales.contracts.users.nombre,
+//     Apellido: factura.bills_mensuales.contracts.users.apellido,
+//     "Nro Linea": factura.nro_linea,
+//     Plan: factura.plan,
+//     Fecha: factura.bills_mensuales.fecha,
+//     Cuota: factura.cuota,
+//     "Monto Valor": factura.monto_valor,
+//     "Monto Servicio": factura.monto_servic,
+//     "Monto Bonificación": factura.monto_bonifi,
+//     "Monto Llama": factura.monto_llama,
+//     "Monto Llamada Inter.": factura.monto_llamcd,
+//     "Monto Roaming": factura.monto_roami,
+//     "Monto Mens": factura.monto_mens,
+//     "Monto Datos": factura.monto_datos,
+//     "Monto Otros": factura.monto_otros,
+//     "Monto Total": factura.monto_total,
+//     Impuestos: factura.impuestos,
+//     "Gestión De Servicios": factura.gestion_de,
+//     Total: factura.total,
+//   }));
 
-export const getFacturaExtras = (factura: FacturaCompleta) => {
-  const extras =
-    factura.extras?.map((extra) => extra.monto).reduce((a, b) => a + b, 0) ?? 0;
-  return numberToTwoDecimal(extras);
-};
+//   const csv = Papa.unparse({
+//     fields: Object.keys(data[0]),
+//     data,
+//   });
 
-export const getFacturaImpuestos = (factura: FacturaCompleta) => {
-  const impuestos = factura.bills
-    .map((bill) => bill.impuestos)
-    .reduce((a, b) => a + b, 0);
-  return numberToTwoDecimal(impuestos);
-};
-
-export const getFacturaGestion = (factura: FacturaCompleta) => {
-  const gestion = factura.bills
-    .map((bill) => bill.gestion_de)
-    .reduce((a, b) => a + b, 0);
-  return numberToTwoDecimal(gestion);
-};
-
-export const getFacturaExcedente = (factura: FacturaCompleta) => {
-  const disponible = factura.contracts.disponible ?? 0;
-  const subtotal = getFacturaSubTotal(factura);
-  const extras = getFacturaExtras(factura);
-  const excedente = subtotal + extras - disponible;
-  return Math.max(0, numberToTwoDecimal(excedente));
-};
-
-export const getFacturaTotal = (factura: FacturaCompleta) => {
-  const subtotal = getFacturaSubTotal(factura);
-  const impuestos = getFacturaImpuestos(factura);
-  const gestion = getFacturaGestion(factura);
-  const extras = getFacturaExtras(factura);
-  let total =
-    subtotal + extras + impuestos + gestion - getFacturaExcedente(factura);
-  if (factura.contracts.tipo !== "activo") {
-    total = subtotal + extras + impuestos + gestion;
-  }
-  return numberToTwoDecimal(total);
-};
-
-export async function downloadBillsInCsvFile(
-  facturas: any[],
-  month: number,
-  year: number
-) {
-  // Map the data to match the headers
-  const data = facturas.map((factura) => ({
-    "Nro Linea": factura.nro_linea,
-    Nombre: factura.nombre,
-    Apellido: factura.apellido,
-    Plan: factura.plan,
-    Fecha: factura.fecha,
-    Cuota: factura.cuota,
-    "Monto Valor": factura.monto_valor,
-    "Monto Servicio": factura.monto_servic,
-    "Monto Bonificación": factura.monto_bonifi,
-    "Monto Llama": factura.monto_llama,
-    "Monto Llamada Inter.": factura.monto_llamcd,
-    "Monto Roaming": factura.monto_roami,
-    "Monto Mens": factura.monto_mens,
-    "Monto Datos": factura.monto_datos,
-    "Monto Otros": factura.monto_otros,
-    "Monto Total": factura.monto_total,
-    Impuestos: factura.impuestos,
-    "Gestión De Servicios": factura.gestion_de,
-    Total: factura.total,
-  }));
-
-  const csv = Papa.unparse({
-    fields: Object.keys(data[0]),
-    data,
-  });
-
-  const blob = new Blob([csv], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `facturas_${month}_${year}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+//   const blob = new Blob([csv], { type: "text/plain" });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement("a");
+//   a.href = url;
+//   a.download = `facturas_${month.toString().padStart(2, "0")}_${year}.csv`;
+//   a.click();
+//   URL.revokeObjectURL(url);
+// }
 
 export async function downloadBillsInExcelFile(
   facturas: FacturadDelMes[],

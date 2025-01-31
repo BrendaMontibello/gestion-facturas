@@ -1,3 +1,5 @@
+"use server";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { read, utils } from "xlsx";
 
@@ -55,10 +57,6 @@ export async function parsearExcelFacturas(file: File): Promise<FacturaCsv[]> {
     monto_otros: numberToTwoDecimal(row["Monto otros cargos "]) || 0,
     monto_total: numberToTwoDecimal(row["Monto total linea"]) || 0,
   }));
-  console.log(
-    "🚀 ~ file: excel-parser.ts:61 ~ parsearExcelFacturas ~ facturas:",
-    facturas
-  );
   return facturas;
 }
 

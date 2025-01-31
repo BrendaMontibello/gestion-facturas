@@ -10,13 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { FacturaCompleta } from "@/lib/types/facturas";
 import {
-  downloadBillsInCsvFile,
+  // downloadBillsInCsvFile,
   downloadBillsInExcelFileporLegajo,
   downloadBillsInTxtFile,
-  getFacturaExcedente,
-  getFacturaExtras,
-  getFacturaSubTotal,
-  getFacturaTotal,
 } from "@/lib/services/factura.service";
 import {
   DropdownMenu,
@@ -33,6 +29,12 @@ import { startOfMonth } from "date-fns";
 import { useBlockingLoading } from "@/hooks/use-blocking-loading";
 import { useRouter } from "next/navigation";
 import { parsearExcelConsumoExtraAplicar } from "@/lib/excel-parser";
+import {
+  getFacturaExcedente,
+  getFacturaExtras,
+  getFacturaFinalTotal,
+  getFacturaTotal,
+} from "@/lib/factura-utils";
 
 export function FacturasTable({
   facturas,
@@ -112,11 +114,11 @@ export function FacturasTable({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => downloadBillsInCsvFile(facturas, month, year)}
             >
               CSV
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             {/* <DropdownMenuItem onClick={() => downloadBillsInExcelFile(facturas, month, year)}>
                 Excel
               </DropdownMenuItem> */}
@@ -150,7 +152,7 @@ export function FacturasTable({
               Disponible
             </TableHead>
             <TableHead className="text-right font-semibold text-black">
-              Subtotal
+              Factura Claro
             </TableHead>
             <TableHead className="text-right font-semibold text-black">
               Extras
@@ -177,7 +179,7 @@ export function FacturasTable({
               <TableCell className="text-center">
                 {factura.contracts.tipo !== "activo"
                   ? "N/A"
-                  : determinarCuota(factura.contracts.fecha_inicio)}
+                  : determinarCuota(factura.contracts.fecha_final)}
               </TableCell>
               <TableCell className="text-right">
                 {factura.contracts.tipo !== "activo"
@@ -185,7 +187,7 @@ export function FacturasTable({
                   : formatearMonto(factura.contracts.disponible ?? 0)}
               </TableCell>
               <TableCell className="text-right">
-                {formatearMonto(getFacturaSubTotal(factura))}
+                {formatearMonto(getFacturaTotal(factura))}
               </TableCell>
               <TableCell className="text-right">
                 {formatearMonto(getFacturaExtras(factura))}
@@ -196,7 +198,7 @@ export function FacturasTable({
                   : formatearMonto(getFacturaExcedente(factura))}
               </TableCell>
               <TableCell className="text-right font-bold">
-                {formatearMonto(getFacturaTotal(factura))}
+                {formatearMonto(getFacturaFinalTotal(factura))}
               </TableCell>
             </TableRow>
           ))}

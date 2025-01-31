@@ -12,8 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { crearContrato } from "@/lib/services/contrato.service";
-import { insertarUsuario } from "@/lib/services/usuarios.service";
+import { insertarMultiplesUsuarios } from "@/lib/services/usuarios.service";
 
 import { capitalize, formatearFechaInicial } from "@/lib/utils";
 import { NuevoUsuario } from "@/lib/types/users";
@@ -37,36 +36,9 @@ export function UsuariosPreview({
   const handleUpload = async () => {
     startLoading("Cargando usuarios...");
     setLoading(true);
-    const errors: Record<string, boolean> = {};
     try {
-      for (const usuario of usuarios) {
-        try {
-          if (
-            usuario.userType === "activo" &&
-            (!usuario.fecha ||
-              !usuario.certificado ||
-              !usuario.disponible ||
-              !usuario.rem_mens ||
-              !usuario.entidad ||
-              !usuario.cuil ||
-              !usuario.apellido ||
-              !usuario.nombre ||
-              !usuario.legajo)
-          ) {
-            errors[usuario.legajo] = true;
-            continue;
-          }
-          const user = await insertarUsuario(usuario);
-          await crearContrato(user.id, usuario);
-          errors[usuario.legajo] = false;
-        } catch (error) {
-          console.error(
-            `Error uploading usuario for ${usuario.legajo}:`,
-            error
-          );
-          errors[usuario.legajo] = true;
-        }
-      }
+      const { errors } = await insertarMultiplesUsuarios(usuarios);
+
       setUsersToShow(usuarios.filter((usuario) => !errors[usuario.legajo]));
       setErrorUsers(errors);
       setShowAlert(Object.values(errors).some((hasError) => hasError));

@@ -1,3 +1,5 @@
+"use server";
+
 import { addYears, isAfter } from "date-fns";
 
 import { createClient as supabase } from "../db/client/supabase-client";

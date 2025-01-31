@@ -1,8 +1,51 @@
+"use server";
+
 import { createClient as supabase } from "../db/client/supabase-client";
 import { Contrato } from "../types/contratos";
 import { PaginatedResponse, PaginationParams } from "../types/pagination";
 import { NuevoUsuario, Usuario } from "../types/users";
 import { addMonths } from "date-fns";
+import { crearContrato } from "./contrato.service";
+
+export async function insertarMultiplesUsuarios(
+  usuarios: NuevoUsuario[]
+): Promise<{ errors: Record<string, boolean> }> {
+  const errors: Record<string, boolean> = {};
+
+  try {
+    for (const usuario of usuarios) {
+      try {
+        if (
+          usuario.userType === "activo" &&
+          (!usuario.fecha ||
+            !usuario.certificado ||
+            !usuario.disponible ||
+            !usuario.rem_mens ||
+            !usuario.entidad ||
+            !usuario.cuil ||
+            !usuario.apellido ||
+            !usuario.nombre ||
+            !usuario.legajo)
+        ) {
+          errors[usuario.legajo] = true;
+          continue;
+        }
+
+        const user = await insertarUsuario(usuario);
+        await crearContrato(user.id, usuario);
+        errors[usuario.legajo] = false;
+      } catch (error) {
+        console.error(`Error uploading usuario for ${usuario.legajo}:`, error);
+        errors[usuario.legajo] = true;
+      }
+    }
+  } catch (error) {
+    console.error("Error uploading usuarios:", error);
+    throw error;
+  }
+
+  return { errors };
+}
 
 export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
   if (!nuevoUsuario.legajo) throw new Error("Legajo is required");
@@ -62,7 +105,6 @@ export async function obtenerUsuariosPaginados(
 
   // Apply contract status filter
   if (estado) {
-    console.log("🚀 ~ file: usuarios.service.ts:65 ~ estado:", estado);
     if (estado === "activo") {
       query = query
         .not("contracts", "is", null) // Only include users with contracts

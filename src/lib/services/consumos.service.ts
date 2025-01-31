@@ -1,9 +1,12 @@
+"use server";
+
 import { createClient as supabase } from "../db/client/supabase-client";
 import {
   ConsumoExtra,
   ConsumoExtraAplicado,
   NuevoConsumoExtraAAplicar,
 } from "../types/consumos";
+
 import { crearFacturaMensual } from "./factura.service";
 
 export async function obtenerConsumoExtra(): Promise<ConsumoExtra[]> {

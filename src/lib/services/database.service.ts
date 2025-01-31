@@ -1,3 +1,5 @@
+"use server";
+
 import { createClient as supabase } from "../db/client/supabase-client";
 
 export async function deleteAllData() {
@@ -9,7 +11,6 @@ export async function deleteAllData() {
     await deleteTable("contracts");
     await deleteTable("users");
     return true;
-
   } catch (error) {
     console.error("Error deleting all data:", error);
     throw error;
