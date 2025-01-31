@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient as supabase } from "../db/client/supabase-client";
 import { Contrato } from "../types/contratos";
 import { PaginatedResponse, PaginationParams } from "../types/pagination";

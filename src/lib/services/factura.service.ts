@@ -1,7 +1,4 @@
-"use server";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { createClient as supabase } from "../db/client/supabase-client";

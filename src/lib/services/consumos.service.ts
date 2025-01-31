@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient as supabase } from "../db/client/supabase-client";
 import {
   ConsumoExtra,

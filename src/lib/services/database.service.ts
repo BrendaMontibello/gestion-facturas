@@ -1,5 +1,3 @@
-"use server";
-
 import { createClient as supabase } from "../db/client/supabase-client";
 
 export async function deleteAllData() {

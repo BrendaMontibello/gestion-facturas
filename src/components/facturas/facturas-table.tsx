@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { FacturaCompleta } from "@/lib/types/facturas";
 import {
-  // downloadBillsInCsvFile,
   downloadBillsInExcelFileporLegajo,
   downloadBillsInTxtFile,
 } from "@/lib/services/factura.service";
@@ -114,14 +113,6 @@ export function FacturasTable({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {/* <DropdownMenuItem
-              onClick={() => downloadBillsInCsvFile(facturas, month, year)}
-            >
-              CSV
-            </DropdownMenuItem> */}
-            {/* <DropdownMenuItem onClick={() => downloadBillsInExcelFile(facturas, month, year)}>
-                Excel
-              </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={() =>
                 downloadBillsInExcelFileporLegajo(facturas, month, year)
