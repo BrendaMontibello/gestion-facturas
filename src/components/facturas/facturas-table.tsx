@@ -60,7 +60,7 @@ export function FacturasTable({
       const extras = await parsearExcelConsumoExtraAplicar(file);
       const resultado = await aplicarConsumoExtraAFacturas(
         extras,
-        startOfMonth(new Date(year, month - 1, 1))
+        startOfMonth(new Date(`${year}/${month}/01`))
       );
 
       if (resultado.errores.length > 0) {

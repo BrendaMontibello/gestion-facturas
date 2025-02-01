@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from '@/components/ui/select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface MonthYearPickerProps {
   onChange: (month: number, year: number) => void;
 }
 
-export function MonthYearPicker({ onChange }: MonthYearPickerProps) {
+export function MonthYearPicker({ onChange }: Readonly<MonthYearPickerProps>) {
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   const [month, setMonth] = useState(currentMonth);

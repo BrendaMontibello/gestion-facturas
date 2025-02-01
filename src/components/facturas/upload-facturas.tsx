@@ -144,7 +144,8 @@ export function UploadFacturas() {
         <div className="flex flex-col gap-4 mb-4">
           <MonthYearPicker
             onChange={(month, year) => {
-              setFecha(new Date(year, month, 1));
+              const date = new Date(`${year}/${month}/01`);
+              setFecha(date);
             }}
           />
           <div className="flex flex-row gap-4">

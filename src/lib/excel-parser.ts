@@ -1,5 +1,3 @@
-"use server";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { read, utils } from "xlsx";
 

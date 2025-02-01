@@ -61,17 +61,7 @@ export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
   let usuario: Usuario;
   if (!existingUser) {
     // Insert new user if not exists
-    const { data: newUser, error: userError } = await supabase()
-      .from("users")
-      .insert({
-        legajo: nuevoUsuario.legajo,
-        cuil: nuevoUsuario.cuil,
-        apellido: nuevoUsuario.apellido.toLowerCase(),
-        nombre: nuevoUsuario.nombre.toLowerCase(),
-        usertype: nuevoUsuario.userType.toLowerCase(),
-      })
-      .select()
-      .maybeSingle();
+    const { newUser, userError } = await insertarUnicoUsuario(nuevoUsuario);
 
     if (userError) throw userError;
     usuario = newUser as Usuario;
@@ -81,6 +71,21 @@ export async function insertarUsuario(nuevoUsuario: NuevoUsuario) {
 
   return usuario;
 }
+
+const insertarUnicoUsuario = async (nuevoUsuario: NuevoUsuario) => {
+  const { data: newUser, error: userError } = await supabase()
+    .from("users")
+    .insert({
+      legajo: nuevoUsuario.legajo,
+      cuil: nuevoUsuario.cuil,
+      apellido: nuevoUsuario.apellido.toLowerCase(),
+      nombre: nuevoUsuario.nombre.toLowerCase(),
+      usertype: nuevoUsuario.userType.toLowerCase(),
+    })
+    .select()
+    .maybeSingle();
+  return { newUser, userError };
+};
 
 export async function obtenerUsuariosPaginados(
   params: PaginationParams

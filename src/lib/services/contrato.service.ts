@@ -3,7 +3,7 @@ import { addYears, isAfter } from "date-fns";
 import { createClient as supabase } from "../db/client/supabase-client";
 
 import { formatearFechaInicial } from "../utils";
-import { Contrato } from "../types/contratos";
+import { Contrato, NuevoContrato } from "../types/contratos";
 import { NuevoUsuario, Usuario, UserType } from "../types/users";
 
 export async function crearContrato(
@@ -57,11 +57,7 @@ export async function crearContrato(
       tipo,
     };
 
-    const { data, error } = await supabase()
-      .from("contracts")
-      .insert(contrato)
-      .select()
-      .maybeSingle();
+    const { data, error } = await insertarContrato(contrato);
 
     if (error) {
       console.error("Error inserting contract:", error);
@@ -71,6 +67,16 @@ export async function crearContrato(
     return data;
   }
 }
+
+export const insertarContrato = async (contrato: NuevoContrato) => {
+  const { data, error } = await supabase()
+    .from("contracts")
+    .insert(contrato)
+    .select()
+    .maybeSingle();
+
+  return { data, error };
+};
 
 export async function obtenerContratosPorUserId(userId: string): Promise<{
   user: Usuario;
