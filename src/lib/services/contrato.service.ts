@@ -2,7 +2,6 @@ import { addYears, isAfter } from "date-fns";
 
 import { createClient as supabase } from "../db/client/supabase-client";
 
-import { formatearFechaInicial } from "../utils";
 import { Contrato, NuevoContrato } from "../types/contratos";
 import { NuevoUsuario, Usuario, UserType } from "../types/users";
 
@@ -10,8 +9,7 @@ export async function crearContrato(
   usuarioId: string,
   nuevoUsuario: NuevoUsuario
 ): Promise<Contrato> {
-  const fechaFormateada = formatearFechaInicial(nuevoUsuario.fecha);
-  const newDate = new Date(fechaFormateada);
+  const newDate = new Date(nuevoUsuario.fecha);
   const fechaInicio = isNaN(newDate.getTime()) ? new Date() : newDate;
   const fechaFinal = isNaN(newDate.getTime())
     ? undefined

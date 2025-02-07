@@ -90,13 +90,20 @@ const insertarUnicoUsuario = async (nuevoUsuario: NuevoUsuario) => {
 export async function obtenerUsuariosPaginados(
   params: PaginationParams
 ): Promise<PaginatedResponse<Usuario & { contracts?: Contrato[] }>> {
-  const { page, pageSize, search, sortBy, sortOrder, estado, tipo } = params;
+  const { page, pageSize, search, estado, tipo } = params;
   const start = (page - 1) * pageSize;
 
-  // Base query - only include contracts if we're filtering by estado or tipo
+  // Base query
   let query = supabase()
     .from("users")
-    .select("*, contracts(*)", { count: "exact" });
+    .select("*, contracts(*)", { count: "exact" })
+    .order("apellido", { ascending: true })
+    .not("contracts", "is", null) // Only include users with contracts
+    .order("fecha_final", {
+      ascending: false,
+      referencedTable: "contracts",
+    }) // Get latest contract first
+    .limit(1, { referencedTable: "contracts" }); // Fetch only the latest contract per user
 
   // Apply search filter
   if (search) {
@@ -107,40 +114,28 @@ export async function obtenerUsuariosPaginados(
   }
 
   // Apply contract status filter
+  const now = new Date().toISOString();
   if (estado) {
     if (estado === "activo") {
       query = query
-        .not("contracts", "is", null) // Only include users with contracts
-        .lte("contracts.fecha_inicio", new Date().toISOString())
-        .gte("contracts.fecha_final", new Date().toISOString());
+        .lte("contracts.fecha_inicio", now)
+        .gte("contracts.fecha_final", now);
     } else if (estado === "renovar") {
       const twoMonthsBeforeEnd = addMonths(new Date(), 2).toISOString();
       query = query
-        .not("contracts", "is", null) // Only include users with contracts
-        .lte("contracts.fecha_inicio", new Date().toISOString())
+        .lte("contracts.fecha_inicio", now)
         .lte("contracts.fecha_final", twoMonthsBeforeEnd)
-        .gte("contracts.fecha_final", new Date().toISOString());
+        .gte("contracts.fecha_final", now);
     } else if (estado === "vencido") {
       query = query
-        .not("contracts", "is", null) // Only include users with contracts
-        .lt("contracts.fecha_final", new Date().toISOString());
-    } else {
-      query = query.not("contracts", "is", null);
+        .lt("contracts.fecha_final", now) // Contract is expired
+        .not("contracts.fecha_final", "gte", now); // Ensure no newer active contract exists
     }
   }
 
   // Apply contract type filter
   if (tipo) {
-    query = query
-      .not("contracts", "is", null) // Only include users with contracts
-      .eq("contracts.tipo", tipo?.toLowerCase());
-  }
-
-  // Apply sorting
-  if (sortBy) {
-    query = query.order(sortBy, { ascending: sortOrder === "asc" });
-  } else {
-    query = query.order("apellido", { ascending: true });
+    query = query.eq("contracts.tipo", tipo?.toLowerCase());
   }
 
   // Apply pagination

@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,26 +13,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { crearContrato } from '@/lib/services/contrato.service';
-import { NuevoUsuario, Usuario } from '@/lib/types/users';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { crearContrato } from "@/lib/services/contrato.service";
+import { NuevoUsuario, Usuario } from "@/lib/types/users";
+import { Calendar } from "@/components/ui/calendar";
+import { es } from "date-fns/locale";
 
 const contratoSchema = z.object({
   fecha: z.string().min(1, "La fecha de inicio es requerida"),
   entidad: z.string().min(1, "La entidad es requerida"),
+
   certificado: z.string().min(1, "El certificado es requerido"),
   disponible: z.number().min(0),
   rem_mens: z.number().min(0),
-  estado: z.enum(['activo', 'vencido', 'cobranza manual']),
 });
 
 type FormValues = z.infer<typeof contratoSchema>;
@@ -44,7 +39,9 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
   const form = useForm<FormValues>({
     resolver: zodResolver(contratoSchema),
     defaultValues: {
-      estado: 'activo',
+      fecha: new Date().toISOString(),
+      entidad: "",
+      certificado: "",
       disponible: 0,
       rem_mens: 0,
     },
@@ -60,7 +57,7 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
         apellido: usuario.apellido,
         nombre: usuario.nombre,
       } as NuevoUsuario);
-      
+
       toast({
         title: "Éxito",
         description: "Contrato creado correctamente",
@@ -69,7 +66,7 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
       router.push(`/contratos/${usuario.id}`);
       router.refresh();
     } catch (error) {
-      console.error('Error creating contract:', error);
+      console.error("Error creating contract:", error);
       toast({
         title: "Error",
         description: "Error al crear el contrato",
@@ -89,35 +86,19 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
               <FormItem>
                 <FormLabel>Fecha de Inicio</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Calendar
+                    locale={es}
+                    mode="single"
+                    selected={new Date(field.value)}
+                    onDayClick={(day) => {
+                      field.onChange(day.toISOString());
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="estado"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="vencido">Vencido</SelectItem>
-                    <SelectItem value="cobranza manual">Cobranza Manual</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
 
           <FormField
             control={form.control}
@@ -154,10 +135,10 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
               <FormItem>
                 <FormLabel>Disponible</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -172,26 +153,20 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
               <FormItem>
                 <FormLabel>Remuneración Mensual</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={e => field.onChange(parseFloat(e.target.value))}
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          
         </div>
 
         <div className="flex justify-end space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancelar
           </Button>
           <Button type="submit">Crear Contrato</Button>
@@ -199,4 +174,4 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
       </form>
     </Form>
   );
-} 
+}

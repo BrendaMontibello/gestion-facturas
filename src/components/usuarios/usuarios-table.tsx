@@ -62,6 +62,7 @@ export function UsuariosTable() {
             | "other"
             | undefined,
         });
+        console.log("🚀 ~ fetchUsuarios ~ response:", response.data);
 
         setUsuarios(response.data);
         setTotalPages(response.totalPages);
@@ -167,53 +168,55 @@ export function UsuariosTable() {
         </TableBody>
       </Table>
 
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronFirst className="h-4 w-4" />
-            Primero
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Anterior
-          </Button>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Página {currentPage} de {totalPages}
-        </div>
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Siguiente
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between space-x-2 py-4">
           <div className="flex gap-4">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
             >
-              Último
-              <ChevronLast className="h-4 w-4" />
+              <ChevronFirst className="h-4 w-4" />
+              Primero
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
             </Button>
           </div>
+          <div className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </div>
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Siguiente
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Último
+                <ChevronLast className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { read, utils } from "xlsx";
 
-import { numberToTwoDecimal } from "./utils";
+import { formatearFechaInicial, numberToTwoDecimal } from "./utils";
 import { FacturaCsv } from "./types/csv";
 import { NuevoUsuario, UserType } from "./types/users";
 import { NuevoConsumoExtraAAplicar, NuevoConsumoExtra } from "./types/consumos";
@@ -20,8 +20,9 @@ export async function parsearUsuariosExcel(
     cuil: row["CUIL"]?.toString().toLowerCase().trim() || "",
     certificado: row["CERTIFICADO"]?.toString().toLowerCase().trim() || "",
     entidad: row["ENTIDAD"]?.toString().toLowerCase().trim() || "",
-    fecha:
-      row["FECHA"]?.toString().trim().padStart(8, "0") || "".padStart(8, "0"),
+    fecha: formatearFechaInicial(
+      row["FECHA"]?.toString().trim().padStart(8, "0") || "".padStart(8, "0")
+    ),
     disponible: numberToTwoDecimal(row["DISPONIBLE"]) || 0,
     rem_mens: numberToTwoDecimal(row["REM MENS"]) || 0,
     nombre: row["NOMBRE"]?.toString().toLowerCase().trim() || "",

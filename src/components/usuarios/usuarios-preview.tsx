@@ -107,7 +107,7 @@ export function UsuariosPreview({
                 <TableCell>
                   {invalidDate && usuario.userType === "activo"
                     ? "Fecha inválida"
-                    : formatearFechaInicial(usuario.fecha)}
+                    : usuario.fecha}
                 </TableCell>
               </TableRow>
             );
