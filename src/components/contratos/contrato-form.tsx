@@ -35,7 +35,6 @@ const contratoSchema = z.object({
   certificado: z.string(),
   disponible: z.number().min(0),
   rem_mens: z.number().min(0),
-  estado: z.enum(["activo", "vencido", "cobranza manual"]),
   tipo: z.enum(["activo", "jubilado", "admin", "aduana", "other"]),
 });
 

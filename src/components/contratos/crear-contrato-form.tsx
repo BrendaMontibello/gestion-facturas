@@ -18,8 +18,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { crearContrato } from "@/lib/services/contrato.service";
 import { NuevoUsuario, Usuario } from "@/lib/types/users";
-import { Calendar } from "@/components/ui/calendar";
-import { es } from "date-fns/locale";
 
 const contratoSchema = z.object({
   fecha: z.string().min(1, "La fecha de inicio es requerida"),
@@ -86,14 +84,7 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
               <FormItem>
                 <FormLabel>Fecha de Inicio</FormLabel>
                 <FormControl>
-                  <Calendar
-                    locale={es}
-                    mode="single"
-                    selected={new Date(field.value)}
-                    onDayClick={(day) => {
-                      field.onChange(day.toISOString());
-                    }}
-                  />
+                  <Input type="date" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

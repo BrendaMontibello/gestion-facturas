@@ -62,7 +62,6 @@ export function UsuariosTable() {
             | "other"
             | undefined,
         });
-        console.log("🚀 ~ fetchUsuarios ~ response:", response.data);
 
         setUsuarios(response.data);
         setTotalPages(response.totalPages);

@@ -27,8 +27,6 @@ import { insertarUsuario } from "@/lib/services/usuarios.service";
 import { NuevoUsuario } from "@/lib/types/users";
 import { crearContrato } from "@/lib/services/contrato.service";
 import { Separator } from "../ui/separator";
-import { Calendar } from "../ui/calendar";
-import { es } from "date-fns/locale";
 
 const usuarioSchema = z.object({
   legajo: z.string().min(1, "El legajo es requerido"),
@@ -200,14 +198,7 @@ export function CrearUsuarioForm() {
                 <FormItem>
                   <FormLabel>Fecha de Inicio</FormLabel>
                   <FormControl>
-                    <Calendar
-                      locale={es}
-                      mode="single"
-                      selected={new Date(field.value)}
-                      onDayClick={(day) => {
-                        field.onChange(day.toISOString());
-                      }}
-                    />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
