@@ -188,26 +188,25 @@ export async function obtenerUsuarioPorId(id: string) {
   }
 }
 
-export async function actualizarUsuario(
-  cuil: string,
-  usuario: Partial<Usuario>
-) {
+export async function actualizarUsuario(id: string, usuario: Partial<Usuario>) {
   try {
     // Ensure the date is in the correct format for PostgreSQL
 
     const { data, error } = await supabase()
-      .from("usuarios")
+      .from("users")
       .update({
         legajo: usuario.legajo,
+        cuil: usuario.cuil,
         apellido: usuario.apellido?.toLowerCase(),
         nombre: usuario.nombre?.toLowerCase(),
         observaciones: usuario.observaciones,
       })
-      .eq("cuil", cuil)
-      .select();
+      .eq("id", id)
+      .select()
+      .maybeSingle();
 
     if (error) throw error;
-    return data[0] as Usuario;
+    return data as Usuario;
   } catch (error) {
     console.error("Error al actualizar usuario:", error);
     throw error;

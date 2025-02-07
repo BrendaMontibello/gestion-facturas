@@ -22,12 +22,6 @@ import { Usuario } from "@/lib/types/users";
 const usuarioSchema = z.object({
   legajo: z.string().min(1, "El legajo es requerido"),
   cuil: z.string(),
-  certificado: z.string(),
-  entidad: z.string(),
-  fecha: z.string().min(1, "La fecha es requerida"),
-  cuota: z.number(),
-  disponible: z.number(),
-  retMens: z.number(),
   apellido: z.string().min(1, "El apellido es requerido"),
   nombre: z.string().min(1, "El nombre es requerido"),
   observaciones: z.string().optional(),
@@ -40,7 +34,13 @@ export function UsuarioForm({ usuario }: Readonly<{ usuario: Usuario }>) {
 
   const form = useForm<Usuario>({
     resolver: zodResolver(usuarioSchema),
-    defaultValues: usuario,
+    defaultValues: {
+      legajo: usuario.legajo,
+      cuil: usuario.cuil,
+      apellido: usuario.apellido,
+      nombre: usuario.nombre,
+      observaciones: usuario.observaciones ?? "",
+    },
   });
 
   const onSubmit = async (data: Usuario) => {
@@ -52,7 +52,7 @@ export function UsuarioForm({ usuario }: Readonly<{ usuario: Usuario }>) {
         nombre: data.nombre.toLowerCase(),
       };
 
-      const response = await actualizarUsuario(data.cuil, updatedData);
+      const response = await actualizarUsuario(usuario.id, updatedData);
       if (!response) throw new Error("Error al actualizar");
 
       toast({
@@ -126,6 +126,19 @@ export function UsuarioForm({ usuario }: Readonly<{ usuario: Usuario }>) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="observaciones"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Observaciones</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
