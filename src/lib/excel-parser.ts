@@ -42,7 +42,7 @@ export async function parsearExcelFacturas(file: File): Promise<FacturaCsv[]> {
 
   const facturas = data.map((row: any) => ({
     nro_linea: parseInt(row["Nro Linea"]),
-    legajo: row["legajo"].toString().trim() || "",
+    legajo: row["Legajo"].toString().trim() || "",
     usuario: row["Usuario"].toString().trim() || "",
     plan: row["Plan"]?.toString().trim() || "",
     monto_valor: numberToTwoDecimal(row["Monto valor plan"]) || 0,
