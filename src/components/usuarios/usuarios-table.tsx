@@ -39,6 +39,7 @@ export function UsuariosTable() {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  console.log("🚀 ~ UsuariosTable ~ usuarios:", usuarios);
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -119,26 +120,35 @@ export function UsuariosTable() {
               <TableCell>
                 {usuario.contracts && (
                   <Badge>
-                    {determinarCuota(usuario.contracts[0].fecha_final)}
+                    {determinarCuota(
+                      usuario.contracts[0].fecha_inicio,
+                      usuario.contracts[0].fecha_final
+                    )}
                   </Badge>
                 )}
               </TableCell>
+
               <TableCell>
-                {usuario.contracts && (
+                {usuario.contracts && usuario.contracts.length > 0 && (
                   <Badge
                     variant={
                       determinarEstadoContrato(
+                        usuario.contracts[0].fecha_inicio,
                         usuario.contracts[0].fecha_final
                       ) === "Activo"
                         ? "default"
                         : determinarEstadoContrato(
+                            usuario.contracts[0].fecha_inicio,
                             usuario.contracts[0].fecha_final
                           ) === "Renovar"
                         ? "secondary"
                         : "destructive"
                     }
                   >
-                    {determinarEstadoContrato(usuario.contracts[0].fecha_final)}
+                    {determinarEstadoContrato(
+                      usuario.contracts[0].fecha_inicio,
+                      usuario.contracts[0].fecha_final
+                    )}
                   </Badge>
                 )}
               </TableCell>

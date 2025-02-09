@@ -42,7 +42,7 @@ export function UploadConsumos() {
       onUpload={handleFileUpload}
       isLoading={isLoading}
       accept=".xlsx, .xls"
-      helpText="Formato esperado: codigo, nombre"
+      helpText="Formato esperado: Codigo, Nombre"
       buttonText="Seleccionar archivo Excel"
       loadingText="Procesando..."
     />

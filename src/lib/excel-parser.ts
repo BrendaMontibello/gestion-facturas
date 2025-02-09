@@ -16,19 +16,19 @@ export async function parsearUsuariosExcel(
   const data = utils.sheet_to_json(sheet);
 
   const users = data.map((row: any) => ({
-    legajo: row["LEGAJO"]?.toString().toLowerCase().trim() || "",
-    cuil: row["CUIL"]?.toString().toLowerCase().trim() || "",
-    certificado: row["CERTIFICADO"]?.toString().toLowerCase().trim() || "",
-    entidad: row["ENTIDAD"]?.toString().toLowerCase().trim() || "",
+    legajo: row["Legajo"]?.toString().toLowerCase().trim() || "",
+    cuil: row["Cuil"]?.toString().toLowerCase().trim() || "",
+    certificado: row["Certificado"]?.toString().toLowerCase().trim() || "",
+    entidad: row["Entidad"]?.toString().toLowerCase().trim() || "",
     fecha: formatearFechaInicial(
-      row["FECHA"]?.toString().trim().padStart(8, "0") || "".padStart(8, "0")
+      row["Fecha"]?.toString().trim().padStart(8, "0") || "".padStart(8, "0")
     ),
-    disponible: numberToTwoDecimal(row["DISPONIBLE"]) || 0,
-    rem_mens: numberToTwoDecimal(row["REM MENS"]) || 0,
-    nombre: row["NOMBRE"]?.toString().toLowerCase().trim() || "",
-    apellido: row["APELLIDO"]?.toString().toLowerCase().trim() || "",
+    disponible: numberToTwoDecimal(row["Disponible"]) || 0,
+    rem_mens: numberToTwoDecimal(row["Rem mens"]) || 0,
+    nombre: row["Nombre"]?.toString().toLowerCase().trim() || "",
+    apellido: row["Apellido"]?.toString().toLowerCase().trim() || "",
     userType:
-      (row["ESTADO"]?.toString().trim().toLowerCase() as UserType) ?? "other",
+      (row["Estado"]?.toString().trim().toLowerCase() as UserType) ?? "other",
   }));
   return users;
 }
@@ -69,8 +69,8 @@ export async function parsearExcelConsumoExtra(
   const data = utils.sheet_to_json(sheet);
 
   const consumos = data.map((row: any) => ({
-    descripcion: row["nombre"].toString().trim() || "",
-    codigo: row["codigo"].toString().padStart(2, "0") || "",
+    descripcion: row["Nombre"].toString().trim() || "",
+    codigo: row["Codigo"].toString().padStart(2, "0") || "",
   }));
 
   return consumos;
@@ -86,9 +86,9 @@ export async function parsearExcelConsumoExtraAplicar(
   const data = utils.sheet_to_json(sheet);
 
   const consumos = data.map((row: any) => ({
-    legajo: row["LEGAJO"].toString().trim() || "",
-    codigo: row["CODIGO"].toString().padStart(2, "0") || "",
-    monto: numberToTwoDecimal(row["MONTO"]) || 0,
+    legajo: row["Legajo"].toString().trim() || "",
+    codigo: row["Codigo"].toString().padStart(2, "0") || "",
+    monto: numberToTwoDecimal(row["Monto"]) || 0,
   }));
 
   return consumos;

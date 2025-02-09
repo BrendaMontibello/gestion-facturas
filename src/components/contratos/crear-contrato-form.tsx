@@ -67,7 +67,7 @@ export function CrearContratoForm({ usuario }: Readonly<{ usuario: Usuario }>) {
       console.error("Error creating contract:", error);
       toast({
         title: "Error",
-        description: "Error al crear el contrato",
+        description: `Error al crear el contrato: ${error}`,
         variant: "destructive",
       });
     }

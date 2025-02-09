@@ -100,7 +100,7 @@ export function FacturasTable({
           onUpload={handleFileUpload}
           isLoading={isUploading}
           accept=".xlsx, .xls"
-          helpText="Formato esperado: LEGAJO, CODIGO, MONTO"
+          helpText="Formato esperado: Legajo, Codigo, Monto"
           buttonText="Cargar Consumos Extras"
           loadingText="Aplicando consumos extras..."
         />
@@ -170,7 +170,10 @@ export function FacturasTable({
               <TableCell className="text-center">
                 {factura.contracts.tipo !== "activo"
                   ? "N/A"
-                  : determinarCuota(factura.contracts.fecha_final)}
+                  : determinarCuota(
+                      factura.contracts.fecha_inicio,
+                      factura.contracts.fecha_final
+                    )}
               </TableCell>
               <TableCell className="text-right">
                 {factura.contracts.tipo !== "activo"

@@ -1,4 +1,4 @@
-import { addYears, isAfter } from "date-fns";
+import { addYears, endOfMonth, isAfter, subMonths } from "date-fns";
 
 import { createClient as supabase } from "../db/client/supabase-client";
 
@@ -13,7 +13,9 @@ export async function crearContrato(
   const fechaInicio = isNaN(newDate.getTime()) ? new Date() : newDate;
   const fechaFinal = isNaN(newDate.getTime())
     ? undefined
-    : addYears(fechaInicio, 1);
+    : endOfMonth(subMonths(addYears(fechaInicio, 1), 1));
+
+  // Check for existing contracts
 
   // Check for existing contracts
   const { data: existingContracts, error: contractCheckError } =
@@ -32,7 +34,8 @@ export async function crearContrato(
     isAfter(new Date(latestContract.fecha_final), fechaInicio)
   ) {
     // If the latest contract is still valid, do nothing
-    return latestContract as Contrato;
+    throw new Error("Un contrato existente es válido");
+    // return latestContract as Contrato;
   } else {
     function isValidUserType(userType: string): userType is UserType {
       return ["activo", "jubilado", "admin", "aduana", "other"].includes(

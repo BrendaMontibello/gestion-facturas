@@ -1,5 +1,5 @@
 import { ClassValue, clsx } from "clsx";
-import { differenceInMonths, isAfter } from "date-fns";
+import { differenceInMonths, startOfMonth } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -11,22 +11,27 @@ export function calcularFechaFinContrato(fechaInicio: Date): string {
   return fechaInicio.toISOString().split("T")[0];
 }
 
-export function determinarCuota(fechaFinal?: string): number {
+export function determinarCuota(
+  fechaInicio: string,
+  fechaFinal?: string
+): number {
   if (!fechaFinal) return 0;
-  if (isAfter(new Date(), new Date(fechaFinal))) return 0;
-  const fechaFinalDate = new Date(fechaFinal);
-  const cuota = 12 - differenceInMonths(fechaFinalDate, new Date());
+  const fechaHoy = startOfMonth(new Date());
+  const fechaInicioDate = startOfMonth(new Date(fechaInicio));
+
+  const cuota = differenceInMonths(fechaHoy, fechaInicioDate) + 1;
   return cuota > 12 ? 0 : cuota;
 }
 
 export function determinarEstadoContrato(
-  fechaFinal: string | undefined
+  fechaInicio: string,
+  fechaFinal?: string
 ): "Activo" | "Renovar" | "Vencido" | "Pago Manual" {
   if (!fechaFinal) return "Pago Manual";
 
-  if (isAfter(new Date(), new Date(fechaFinal))) return "Vencido";
-  const mesesHastaFinal = determinarCuota(fechaFinal);
-
+  // Calculate the remaining months, ignoring the day
+  const mesesHastaFinal = determinarCuota(fechaInicio, fechaFinal);
+  if (mesesHastaFinal === 0) return "Vencido";
   if (mesesHastaFinal > 10) return "Renovar";
   return "Activo";
 }

@@ -80,7 +80,7 @@ export default function CargarUsuarios() {
             onUpload={handleFileUpload}
             isLoading={isLoading}
             accept=".xlsx, .xls"
-            helpText="Formato esperado: LEGAJO, CUIL, CERTIFICADO, ENTIDAD, FECHA, CUOTA, DISPONIBLE, REM MES, APELLIDO Y NOMBRE"
+            helpText="Formato esperado: Legajo, Cuil, Certificado, Entidad, Fecha, Cuota, Disponible, Rem mens, Apellido y Nombre"
             buttonText="Seleccionar archivo Excel"
             loadingText="Procesando..."
           />

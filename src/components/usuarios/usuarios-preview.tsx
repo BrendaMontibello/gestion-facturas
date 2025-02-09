@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { insertarMultiplesUsuarios } from "@/lib/services/usuarios.service";
 
-import { capitalize, formatearFechaInicial } from "@/lib/utils";
+import { capitalize } from "@/lib/utils";
 import { NuevoUsuario } from "@/lib/types/users";
 import { useBlockingLoading } from "@/hooks/use-blocking-loading";
 
@@ -30,6 +30,7 @@ export function UsuariosPreview({
   const [loading, setLoading] = useState(false);
   const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
   const [usersToShow, setUsersToShow] = useState<NuevoUsuario[]>(usuarios);
+  console.log("🚀 ~ usersToShow:", usersToShow);
   const [showAlert, setShowAlert] = useState(false);
   const { startLoading, stopLoading } = useBlockingLoading();
 
@@ -53,8 +54,7 @@ export function UsuariosPreview({
 
   const isInvalidCuil = (cuil: string) => cuil.length !== 11;
   const isInvalidDate = (date: string) => {
-    const formatedDate = formatearFechaInicial(date);
-    const newDate = new Date(formatedDate);
+    const newDate = new Date(date);
     return isNaN(newDate.getTime());
   };
 

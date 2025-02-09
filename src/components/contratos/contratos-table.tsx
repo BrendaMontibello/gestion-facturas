@@ -46,24 +46,36 @@ export function ContratosTable({
               </TableCell>
               <TableCell>
                 {contrato.fecha_final
-                  ? format(new Date(contrato.fecha_final), "dd/MM/yyyy")
+                  ? format(new Date(contrato.fecha_final), "MM/yyyy")
                   : "-"}
               </TableCell>
               <TableCell>
-                <Badge>{determinarCuota(contrato.fecha_final)}</Badge>
+                <Badge>
+                  {determinarCuota(contrato.fecha_inicio, contrato.fecha_final)}
+                </Badge>
               </TableCell>
               <TableCell>
                 <Badge
                   variant={
-                    determinarEstadoContrato(contrato.fecha_final) === "Activo"
+                    determinarEstadoContrato(
+                      contrato.fecha_inicio,
+                      contrato.fecha_final
+                    ) === "Activo"
                       ? "default"
-                      : determinarEstadoContrato(contrato.fecha_final) ===
-                        "Renovar"
+                      : determinarEstadoContrato(
+                          contrato.fecha_inicio,
+                          contrato.fecha_final
+                        ) === "Renovar"
                       ? "secondary"
                       : "destructive"
                   }
                 >
-                  {capitalize(determinarEstadoContrato(contrato.fecha_final))}
+                  {capitalize(
+                    determinarEstadoContrato(
+                      contrato.fecha_inicio,
+                      contrato.fecha_final
+                    )
+                  )}
                 </Badge>
               </TableCell>
               <TableCell>
