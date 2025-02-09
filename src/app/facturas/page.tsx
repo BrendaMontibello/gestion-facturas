@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MonthYearPicker } from "@/components/ui/month-year-picker";
 import { obtenerFacturasDelMes } from "@/lib/services/factura.service";
 import { FacturaCompleta } from "@/lib/types/facturas";
-import { determinarEstadoContrato } from "../../lib/date";
 import { formatearMonto } from "@/lib/utils";
 
 export default function FacturasPage() {
@@ -76,13 +75,11 @@ export default function FacturasPage() {
                 Total de Facturas Activos:{" "}
                 {
                   facturas.filter(
-                    (factura) =>
-                      determinarEstadoContrato(
-                        factura.contracts.fecha_inicio
-                      ) === "Activo"
+                    (factura) => factura.contracts.tipo === "activo"
                   ).length
                 }
               </p>
+
               <p>Gran Total: {formatearMonto(totalSum)}</p>
               <p>Total de Extras: {formatearMonto(totalExtras)}</p>
               <p>Total con Extras: {formatearMonto(totalConExtras)}</p>

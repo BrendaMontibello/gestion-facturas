@@ -39,7 +39,6 @@ export function UsuariosTable() {
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  console.log("🚀 ~ UsuariosTable ~ usuarios:", usuarios);
 
   useEffect(() => {
     const fetchUsuarios = async () => {

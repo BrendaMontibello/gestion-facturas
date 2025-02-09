@@ -1,3 +1,4 @@
+import { startOfMonth } from "date-fns";
 import { createClient as supabase } from "../db/client/supabase-client";
 import {
   ConsumoExtra,
@@ -103,43 +104,40 @@ export async function aplicarConsumoExtraAFacturas(
 
   for (const extra of extras) {
     try {
-      let facturaId: string;
-      // Get the latest bill_mensual for the user with this legajo
-      const { data: facturaMensual, error: facturaError } = await supabase()
-        .from("bills_mensuales")
-        .select(
-          `
-        id,
-        contracts!inner(
-          users!inner(legajo)
-          )
-          `
-        )
-        .eq("contracts.users.legajo", extra.legajo)
-        .order("fecha", { ascending: false });
+      // Check if the legajo has a contract
+      const { data: contract, error: contractError } = await supabase()
+        .from("contracts")
+        .select("id, users!inner(legajo)")
+        .eq("users.legajo", extra.legajo)
+        .order("fecha_inicio", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (facturaError) {
-        errores.push(`No se encontró factura para el legajo ${extra.legajo}`);
+      if (contractError || !contract) {
+        errores.push(`No se encontró contrato para el legajo ${extra.legajo}`);
         continue;
       }
 
-      if (!facturaMensual || facturaMensual.length === 0) {
-        const { data: contract, error: contractError } = await supabase()
-          .from("contracts")
-          .select("id, users: users!inner(legajo)")
-          .eq("users.legajo", extra.legajo)
-          .order("fecha_inicio", { ascending: false });
+      // Check if there's a factura_mensual for this month
+      const { data: facturaMensual, error: facturaError } = await supabase()
+        .from("bills_mensuales")
+        .select("id")
+        .eq("contract_id", contract.id)
+        .eq("fecha", startOfMonth(fecha).toISOString())
+        .maybeSingle();
 
-        if (contractError || !contract || contract.length === 0) {
-          errores.push(
-            `No se encontró contrato para el legajo ${extra.legajo}`
-          );
-          continue;
-        }
+      if (facturaError) {
+        errores.push(`Error al buscar factura para el legajo ${extra.legajo}`);
+        continue;
+      }
 
-        facturaId = await crearFacturaMensual(contract[0].id, fecha);
+      // If no factura_mensual exists, create one
+      let facturaId: string = "";
+
+      if (!facturaMensual) {
+        facturaId = await crearFacturaMensual(contract.id, fecha);
       } else {
-        facturaId = facturaMensual[0].id;
+        facturaId = facturaMensual.id;
       }
 
       // Verify the discount code exists

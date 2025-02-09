@@ -30,7 +30,6 @@ export function UsuariosPreview({
   const [loading, setLoading] = useState(false);
   const [errorUsers, setErrorUsers] = useState<Record<string, boolean>>({});
   const [usersToShow, setUsersToShow] = useState<NuevoUsuario[]>(usuarios);
-  console.log("🚀 ~ usersToShow:", usersToShow);
   const [showAlert, setShowAlert] = useState(false);
   const { startLoading, stopLoading } = useBlockingLoading();
 

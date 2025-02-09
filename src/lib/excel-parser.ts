@@ -23,8 +23,8 @@ export async function parsearUsuariosExcel(
     fecha: formatearFechaInicial(
       row["Fecha"]?.toString().trim().padStart(8, "0") || "".padStart(8, "0")
     ),
-    disponible: numberToTwoDecimal(row["Disponible"]) || 0,
-    rem_mens: numberToTwoDecimal(row["Rem mens"]) || 0,
+    disponible: numberToTwoDecimal(parseFloat(row["Disponible"])) || 0,
+    rem_mens: numberToTwoDecimal(parseFloat(row["Rem mens"])) || 0,
     nombre: row["Nombre"]?.toString().toLowerCase().trim() || "",
     apellido: row["Apellido"]?.toString().toLowerCase().trim() || "",
     userType:
@@ -45,16 +45,21 @@ export async function parsearExcelFacturas(file: File): Promise<FacturaCsv[]> {
     legajo: row["Legajo"].toString().trim() || "",
     usuario: row["Usuario"].toString().trim() || "",
     plan: row["Plan"]?.toString().trim() || "",
-    monto_valor: numberToTwoDecimal(row["Monto valor plan"]) || 0,
-    monto_servic: numberToTwoDecimal(row["Monto servicios adicionales"]) || 0,
-    monto_bonifi: numberToTwoDecimal(row["Monto bonificaciones"]) || 0,
-    monto_llama: numberToTwoDecimal(row["Monto llamadas locales nac"]) || 0,
-    monto_llamcd: numberToTwoDecimal(row["Monto llamdas internacionales"]) || 0,
-    monto_roami: numberToTwoDecimal(row["Monto roaming"]) || 0,
-    monto_mens: numberToTwoDecimal(row["Monto mensajes"]) || 0,
-    monto_datos: numberToTwoDecimal(row["Monto datos"]) || 0,
-    monto_otros: numberToTwoDecimal(row["Monto otros cargos "]) || 0,
-    monto_total: numberToTwoDecimal(row["Monto total linea"]) || 0,
+    monto_valor: numberToTwoDecimal(parseFloat(row["Monto valor plan"])) || 0,
+    monto_servic:
+      numberToTwoDecimal(parseFloat(row["Monto servicios adicionales"])) || 0,
+    monto_bonifi:
+      numberToTwoDecimal(parseFloat(row["Monto bonificaciones"])) || 0,
+    monto_llama:
+      numberToTwoDecimal(parseFloat(row["Monto llamadas locales nac"])) || 0,
+    monto_llamcd:
+      numberToTwoDecimal(parseFloat(row["Monto llamdas internacionales"])) || 0,
+    monto_roami: numberToTwoDecimal(parseFloat(row["Monto roaming"])) || 0,
+    monto_mens: numberToTwoDecimal(parseFloat(row["Monto mensajes"])) || 0,
+    monto_datos: numberToTwoDecimal(parseFloat(row["Monto datos"])) || 0,
+    monto_otros:
+      numberToTwoDecimal(parseFloat(row["Monto otros cargos "])) || 0,
+    monto_total: numberToTwoDecimal(parseFloat(row["Monto total linea"])) || 0,
   }));
   return facturas;
 }
