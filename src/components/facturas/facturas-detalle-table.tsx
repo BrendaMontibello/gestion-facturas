@@ -76,7 +76,7 @@ export function FacturasDetalleTable({
               {factura.extras?.map((extra) => (
                 <TableRow key={extra.extras.descripcion}>
                   <TableCell>{extra.extras.descripcion}</TableCell>
-                  <TableCell>${formatearMonto(extra.monto)}</TableCell>
+                  <TableCell>{formatearMonto(extra.monto)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

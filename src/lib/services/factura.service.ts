@@ -18,6 +18,7 @@ import {
   getFacturaExtras,
   getFacturaGestion,
   getFacturaSubTotal,
+  getFacturaFinalTotal,
 } from "../factura-utils";
 
 export async function obtenerFacturasDelMes(
@@ -377,13 +378,14 @@ export async function downloadBillsInExcelFileporLegajo(
 ) {
   const data = facturas.map((factura) => {
     const isActivo = factura.contracts.tipo === "activo";
-    const subtotal = getFacturaSubTotal(factura);
+    const claro = getFacturaSubTotal(factura);
+    const subtotal = getFacturaTotal(factura);
     const impuestos = getFacturaImpuestos(factura);
     const gestion = getFacturaGestion(factura);
     const extras = getFacturaExtras(factura);
     const disponible = factura.contracts.disponible;
     const excedente = getFacturaExcedente(factura);
-    const total = getFacturaTotal(factura);
+    const total = getFacturaFinalTotal(factura);
     return {
       Legajo: factura.contracts.users.legajo,
       Nombre: factura.contracts.users.nombre,
@@ -393,9 +395,10 @@ export async function downloadBillsInExcelFileporLegajo(
         ? calcularCuotaActual(factura.contracts.fecha_inicio)
         : "N/A",
       Disponible: isActivo ? numberToTwoDecimal(disponible) : "N/A",
-      Subtotal: numberToTwoDecimal(subtotal),
+      Claro: numberToTwoDecimal(claro),
       Impuestos: numberToTwoDecimal(impuestos),
       Gestion: numberToTwoDecimal(gestion),
+      Subtotal: numberToTwoDecimal(subtotal),
       Extras: numberToTwoDecimal(extras),
       Excedente: isActivo ? numberToTwoDecimal(excedente) : "N/A",
       Total: numberToTwoDecimal(total),
@@ -419,7 +422,7 @@ export async function downloadBillsInTxtFile(
   const data = facturas
     .filter((factura) => factura.contracts.tipo === "activo")
     .map((factura) => {
-      const newImporte = Math.round(getFacturaTotal(factura) * 100)
+      const newImporte = Math.round(getFacturaFinalTotal(factura) * 100)
         .toString()
         .padStart(13, "0");
       if (parseInt(newImporte) <= 0) return;
