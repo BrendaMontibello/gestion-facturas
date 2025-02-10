@@ -4,11 +4,23 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { deleteAllData, deleteTable } from "@/lib/services/database.service";
+import {
+  deleteAllData,
+  deleteBillExtrasByMonth,
+  deleteBillsByMonth,
+  deleteFacturasMensualesByMonth,
+  deleteTable,
+} from "@/lib/services/database.service";
+import { MonthYearPicker } from "@/components/ui/month-year-picker";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { startOfMonth } from "date-fns";
 
 export default function ResetDatabasePage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [selectedMonth, setSelectedMonth] = useState<Date>(
+    startOfMonth(new Date())
+  );
 
   const tables = [
     { name: "users", label: "Usuarios" },
@@ -42,7 +54,16 @@ export default function ResetDatabasePage() {
   const handleDeleteTable = async (tableName: string) => {
     setLoading(true);
     try {
-      await deleteTable(tableName);
+      if (tableName === "bills") {
+        await deleteBillsByMonth(selectedMonth);
+      } else if (tableName === "bills_mensuales") {
+        await deleteFacturasMensualesByMonth(selectedMonth);
+      } else if (tableName === "bill_extras") {
+        await deleteBillExtrasByMonth(selectedMonth);
+      } else {
+        await deleteTable(tableName);
+      }
+
       toast({
         title: "Éxito",
         description: `La tabla ${tableName} ha sido eliminada.`,
@@ -62,25 +83,62 @@ export default function ResetDatabasePage() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-2xl font-bold mb-4">Administrar Base de Datos</h1>
-      <Button
+      {/* <Button
         onClick={handleDeleteAll}
         disabled={loading}
         className="mb-4 bg-red-500 hover:bg-red-600"
       >
         {loading ? "Eliminando..." : "Eliminar Toda la Base de Datos"}
-      </Button>
-      <div className="flex flex-row flex-wrap gap-2">
+      </Button> */}
+
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="flex w-full gap-2">
+          {tables.map((table) => (
+            <TabsTrigger key={table.name} value={table.name}>
+              {table.label}
+            </TabsTrigger>
+          ))}
+          <TabsTrigger value="todos">Todos</TabsTrigger>
+        </TabsList>
+
         {tables.map((table) => (
-          <Button
-            key={table.name}
-            onClick={() => handleDeleteTable(table.name)}
-            disabled={loading}
-            className="mb-4"
-          >
-            {loading ? "Eliminando..." : `Eliminar Tabla de ${table.label}`}
-          </Button>
+          <TabsContent key={table.name} value={table.name}>
+            {["bills_mensuales", "bills", "bill_extras"].includes(
+              table.name
+            ) ? (
+              <>
+                <MonthYearPicker
+                  onChange={(month, year) =>
+                    setSelectedMonth(new Date(year, month - 1, 1))
+                  }
+                />
+                <Button
+                  onClick={() => handleDeleteTable(table.name)}
+                  disabled={loading || !selectedMonth}
+                  className="mt-4"
+                >
+                  {loading
+                    ? "Eliminando..."
+                    : `Eliminar ${table.label} del Mes`}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => handleDeleteTable(table.name)}
+                disabled={loading}
+                className="mt-4"
+              >
+                {loading ? "Eliminando..." : `Eliminar Tabla de ${table.label}`}
+              </Button>
+            )}
+          </TabsContent>
         ))}
-      </div>
+        <TabsContent value="todos">
+          <Button onClick={handleDeleteAll} disabled={loading}>
+            {loading ? "Eliminando..." : "Eliminar Toda la Base de Datos"}
+          </Button>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
