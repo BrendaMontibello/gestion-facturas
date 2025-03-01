@@ -30,7 +30,7 @@ export const getFacturaGestion = (factura: FacturaCompleta) => {
 
 export const getFacturaExcedente = (factura: FacturaCompleta) => {
   const disponible = factura.contracts.disponible ?? 0;
-  const subtotal = getFacturaSubTotal(factura);
+  const subtotal = getFacturaTotal(factura);
   const extras = getFacturaExtras(factura);
   const excedente = subtotal + extras - disponible;
   return Math.max(0, numberToTwoDecimal(excedente));
