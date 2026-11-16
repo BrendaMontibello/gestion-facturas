@@ -63,7 +63,7 @@ export function UsuarioForm({ usuario }: Readonly<{ usuario: Usuario }>) {
       router.push("/usuarios");
       router.refresh();
     } catch (error) {
-      console.log("🚀 ~ onSubmit ~ error:", error);
+      console.error("Error al guardar usuario:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el usuario",

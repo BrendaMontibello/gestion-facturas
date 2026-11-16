@@ -1,6 +1,13 @@
 "use client";
 
-import { FileSpreadsheet, Home, Receipt, Users } from "lucide-react";
+import {
+  FileDown,
+  FileSpreadsheet,
+  Home,
+  Percent,
+  Receipt,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,7 +27,8 @@ const menuItems = [
   { href: "/usuarios", icon: Users, label: "Ver Usuarios" },
   { href: "/cargar-facturas", icon: Receipt, label: "Cargar Facturas" },
   { href: "/facturas", icon: Receipt, label: "Ver Facturas" },
-  { href: "/consumos", icon: Receipt, label: "Ver Consumos" },
+  { href: "/consumos", icon: Percent, label: "Consumos Extras" },
+  { href: "/resetear-db", icon: FileDown, label: "Administrar Datos" },
 ];
 
 export function NavigationDrawer() {

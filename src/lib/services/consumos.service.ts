@@ -1,4 +1,4 @@
-import { startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth } from "date-fns";
 import { createClient as supabase } from "../db/client/supabase-client";
 import {
   ConsumoExtra,
@@ -6,7 +6,9 @@ import {
   NuevoConsumoExtraAAplicar,
 } from "../types/consumos";
 
-import { crearFacturaMensual } from "./factura.service";
+import { crearFacturaMensual, obtenerContratoVigenteEnMes } from "./factura.service";
+import { deleteBillExtrasByMonth } from "./database.service";
+import { obtenerUsuarioPorLegajo } from "./usuarios.service";
 
 export async function obtenerConsumoExtra(): Promise<ConsumoExtra[]> {
   const { data, error } = await supabase()
@@ -102,28 +104,35 @@ export async function aplicarConsumoExtraAFacturas(
   const extrasAplicados: ConsumoExtraAplicado[] = [];
   const errores: string[] = [];
 
+  // Reemplaza extras del mes al re-subir el archivo
+  await deleteBillExtrasByMonth(fecha);
+
+  const inicioMes = startOfMonth(fecha).toISOString();
+  const finMes = endOfMonth(fecha).toISOString();
+
   for (const extra of extras) {
     try {
-      // Check if the legajo has a contract
-      const { data: contract, error: contractError } = await supabase()
-        .from("contracts")
-        .select("id, users!inner(legajo)")
-        .eq("users.legajo", extra.legajo)
-        .order("fecha_inicio", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (contractError || !contract) {
-        errores.push(`No se encontró contrato para el legajo ${extra.legajo}`);
+      const user = await obtenerUsuarioPorLegajo(extra.legajo);
+      if (!user) {
+        errores.push(`No se encontró usuario para el legajo ${extra.legajo}`);
         continue;
       }
 
-      // Check if there's a factura_mensual for this month
+      const contract = await obtenerContratoVigenteEnMes(user.id, fecha);
+      if (!contract) {
+        errores.push(
+          `No se encontró contrato vigente para el legajo ${extra.legajo}`
+        );
+        continue;
+      }
+
       const { data: facturaMensual, error: facturaError } = await supabase()
         .from("bills_mensuales")
         .select("id")
         .eq("contract_id", contract.id)
-        .eq("fecha", startOfMonth(fecha).toISOString())
+        .gte("fecha", inicioMes)
+        .lte("fecha", finMes)
+        .limit(1)
         .maybeSingle();
 
       if (facturaError) {
@@ -131,7 +140,6 @@ export async function aplicarConsumoExtraAFacturas(
         continue;
       }
 
-      // If no factura_mensual exists, create one
       let facturaId: string = "";
 
       if (!facturaMensual) {
@@ -140,7 +148,6 @@ export async function aplicarConsumoExtraAFacturas(
         facturaId = facturaMensual.id;
       }
 
-      // Verify the discount code exists
       const { data: descuentoExistente, error: descuentoError } =
         await supabase()
           .from("extras")
@@ -153,7 +160,6 @@ export async function aplicarConsumoExtraAFacturas(
         continue;
       }
 
-      // Apply the discount
       const extraAplicado = await insertarConsumoExtra(
         {
           codigo: extra.codigo,

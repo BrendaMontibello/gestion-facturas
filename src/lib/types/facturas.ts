@@ -55,7 +55,7 @@ export type NuevaFactura = {
     total: number;
   }
 
-  export type FacturadDelMes = FacturaLinea & {
+  export type FacturaDelMes = FacturaLinea & {
     cuota: number;
     totalExtras: number;
     totalConExtras: number;

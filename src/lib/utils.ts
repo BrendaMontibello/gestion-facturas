@@ -1,58 +1,28 @@
 import { ClassValue, clsx } from "clsx";
-import { differenceInMonths, startOfMonth } from "date-fns";
 import { twMerge } from "tailwind-merge";
+
+export {
+  calcularFechaFinContratoISO as calcularFechaFinContrato,
+  determinarCuota,
+  determinarEstadoContrato,
+  formatearFechaInicial,
+} from "./date";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function calcularFechaFinContrato(fechaInicio: Date): string {
-  fechaInicio.setFullYear(fechaInicio.getFullYear() + 1);
-  return fechaInicio.toISOString().split("T")[0];
-}
-
-export function determinarCuota(
-  fechaInicio: string,
-  fechaFinal?: string
-): number {
-  if (!fechaFinal) return 0;
-  const fechaHoy = startOfMonth(new Date());
-  const fechaInicioDate = startOfMonth(new Date(fechaInicio));
-
-  const cuota = differenceInMonths(fechaHoy, fechaInicioDate) + 1;
-  return cuota > 12 ? 0 : cuota;
-}
-
-export function determinarEstadoContrato(
-  fechaInicio: string,
-  fechaFinal?: string
-): "Activo" | "Renovar" | "Vencido" | "Pago Manual" {
-  if (!fechaFinal) return "Pago Manual";
-
-  // Calculate the remaining months, ignoring the day
-  const mesesHastaFinal = determinarCuota(fechaInicio, fechaFinal);
-  if (mesesHastaFinal === 0) return "Vencido";
-  if (mesesHastaFinal > 10) return "Renovar";
-  return "Activo";
-}
-
-export function formatearFechaInicial(fecha: string): string {
-  const dia = fecha.slice(0, 2);
-  const mes = fecha.slice(2, 4);
-  const año = fecha.slice(4, 8);
-  return `${mes}/${dia}/${año}`;
-}
-
-export function formatearCuil(fecha: string): string {
-  const primero = fecha.slice(0, 2);
-  const dni = fecha.slice(2, 9);
-  const ultimo = fecha.slice(9);
+export function formatearCuil(cuil: string): string {
+  const primero = cuil.slice(0, 2);
+  const dni = cuil.slice(2, 9);
+  const ultimo = cuil.slice(9);
   return `${primero}-${dni}-${ultimo}`;
 }
 
 export function formatearFecha(fecha: string): string {
-  const [dia, mes, año] = fecha.split("/");
-  return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+  // Acepta dd/mm/yyyy → yyyy-mm-dd
+  const [dia, mes, anio] = fecha.split("/");
+  return `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
 }
 
 export function formatearMonto(monto: number): string {

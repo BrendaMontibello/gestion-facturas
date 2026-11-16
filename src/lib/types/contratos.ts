@@ -1,8 +1,9 @@
 import { UserType } from "./users";
 
 export type NuevoContrato = {
-  fecha_inicio: Date;
-  fecha_final?: Date;
+  user_id?: string;
+  fecha_inicio: string | Date;
+  fecha_final?: string | Date;
   entidad?: string;
   certificado?: string;
   disponible?: number;

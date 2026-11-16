@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
 import { FileUpload } from "../ui/file-upload";
+import { Button } from "../ui/button";
 import { crearConsumosExtra } from "@/lib/services/consumos.service";
 import { parsearExcelConsumoExtra } from "@/lib/excel-parser";
+import { descargarPlantillaConsumos } from "@/lib/excel-templates";
 
 export function UploadConsumos() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +32,10 @@ export function UploadConsumos() {
       console.error("Error uploading extras:", error);
       toast({
         title: "Error",
-        description: "Hubo un error al cargar los extras",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Hubo un error al cargar los extras",
         variant: "destructive",
       });
     } finally {
@@ -38,13 +45,26 @@ export function UploadConsumos() {
   };
 
   return (
-    <FileUpload
-      onUpload={handleFileUpload}
-      isLoading={isLoading}
-      accept=".xlsx, .xls"
-      helpText="Formato esperado: Codigo, Nombre"
-      buttonText="Seleccionar archivo Excel"
-      loadingText="Procesando..."
-    />
+    <div className="space-y-2 mb-4">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={descargarPlantillaConsumos}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Plantilla Excel
+        </Button>
+      </div>
+      <FileUpload
+        onUpload={handleFileUpload}
+        isLoading={isLoading}
+        accept=".xlsx, .xls"
+        helpText="Formato esperado: Codigo, Nombre"
+        buttonText="Seleccionar archivo Excel"
+        loadingText="Procesando..."
+      />
+    </div>
   );
 }

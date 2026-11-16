@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Download } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { insertarMultiplesUsuarios } from "@/lib/services/usuarios.service";
+import { exportarLegajosOmitidos } from "@/lib/excel-templates";
 
 import { capitalize } from "@/lib/utils";
 import { NuevoUsuario } from "@/lib/types/users";
@@ -60,10 +62,30 @@ export function UsuariosPreview({
   return (
     <div>
       {showAlert && (
-        <Alert variant="destructive" className="mb-4">
-          Algunos usuarios no pudieron ser cargados. Revise los errores e
-          intente con un nuevo archivo con sólo los usuarios que tienen errores.
-        </Alert>
+        <div className="mb-4 space-y-2">
+          <Alert variant="destructive">
+            Algunos usuarios no pudieron ser cargados. Revisá los errores o
+            exportá los legajos omitidos.
+          </Alert>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              exportarLegajosOmitidos(
+                usuarios
+                  .filter((u) => errorUsers[u.legajo])
+                  .map((u) => ({
+                    legajo: u.legajo,
+                    motivo: "Error al cargar usuario/contrato",
+                  }))
+              )
+            }
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar omitidos
+          </Button>
+        </div>
       )}
       <Table>
         <TableHeader>

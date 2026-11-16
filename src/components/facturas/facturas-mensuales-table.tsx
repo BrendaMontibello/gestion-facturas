@@ -54,7 +54,10 @@ export function FacturasMensualesTable({
             </TableCell>
             <TableCell>
               {facturaMensual.contracts.tipo === "activo"
-                ? calcularCuotaActual(facturaMensual.contracts.fecha_inicio)
+                ? calcularCuotaActual(
+                    facturaMensual.contracts.fecha_inicio,
+                    new Date(facturaMensual.fecha)
+                  )
                 : ""}
             </TableCell>
             <TableCell>

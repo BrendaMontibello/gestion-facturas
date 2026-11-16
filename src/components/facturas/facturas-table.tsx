@@ -1,4 +1,9 @@
+"use client";
+
 import { Download } from "lucide-react";
+import { useState } from "react";
+import { startOfMonth } from "date-fns";
+
 import {
   Table,
   TableBody,
@@ -21,13 +26,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { capitalize, determinarCuota, formatearMonto } from "@/lib/utils";
 import { aplicarConsumoExtraAFacturas } from "@/lib/services/consumos.service";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { FileUpload } from "../ui/file-upload";
-import { startOfMonth } from "date-fns";
 import { useBlockingLoading } from "@/hooks/use-blocking-loading";
-import { useRouter } from "next/navigation";
 import { parsearExcelConsumoExtraAplicar } from "@/lib/excel-parser";
+import { descargarPlantillaConsumosAplicar } from "@/lib/excel-templates";
 import {
   getFacturaExcedente,
   getFacturaExtras,
@@ -37,19 +40,24 @@ import {
 
 export function FacturasTable({
   facturas,
+  allFacturas,
   loading,
   month,
   year,
+  onRefresh,
 }: Readonly<{
   facturas: FacturaCompleta[];
+  allFacturas: FacturaCompleta[];
   loading: boolean;
   month: number;
   year: number;
+  onRefresh?: () => Promise<void>;
 }>) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const { startLoading, stopLoading } = useBlockingLoading();
-  const router = useRouter();
+  const exportSource = allFacturas.length > 0 ? allFacturas : facturas;
+  const referenciaMes = new Date(year, month - 1, 1);
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -60,32 +68,36 @@ export function FacturasTable({
       const extras = await parsearExcelConsumoExtraAplicar(file);
       const resultado = await aplicarConsumoExtraAFacturas(
         extras,
-        startOfMonth(new Date(`${year}/${month}/01`))
+        startOfMonth(referenciaMes)
       );
 
       if (resultado.errores.length > 0) {
         toast({
           title: "Advertencia",
-          description: `Se aplicaron ${resultado.aplicados.length} extras, pero hubo ${resultado.errores.length} errores`,
+          description: `Se aplicaron ${resultado.aplicados.length} extras, pero hubo ${resultado.errores.length} errores. Los extras del mes fueron reemplazados.`,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Éxito",
-          description: `Se aplicaron ${resultado.aplicados.length} extras correctamente`,
+          description: `Se aplicaron ${resultado.aplicados.length} extras (reemplazo del mes).`,
         });
       }
+
+      await onRefresh?.();
     } catch (error) {
       console.error("Error applying extras:", error);
       toast({
         title: "Error",
-        description: "Hubo un error al aplicar los extras",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Hubo un error al aplicar los extras",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
       stopLoading();
-      router.refresh();
     }
   };
 
@@ -95,15 +107,25 @@ export function FacturasTable({
 
   return (
     <div>
-      <div className="flex justify-between mb-4">
-        <FileUpload
-          onUpload={handleFileUpload}
-          isLoading={isUploading}
-          accept=".xlsx, .xls"
-          helpText="Formato esperado: Legajo, Codigo, Monto"
-          buttonText="Cargar Consumos Extras"
-          loadingText="Aplicando consumos extras..."
-        />
+      <div className="flex flex-wrap justify-between gap-4 mb-4">
+        <div className="flex flex-col gap-2">
+          <FileUpload
+            onUpload={handleFileUpload}
+            isLoading={isUploading}
+            accept=".xlsx, .xls"
+            helpText="Formato: Legajo, Codigo, Monto. Reemplaza extras del mes."
+            buttonText="Cargar Consumos Extras"
+            loadingText="Aplicando consumos extras..."
+          />
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto p-0 justify-start"
+            onClick={descargarPlantillaConsumosAplicar}
+          >
+            Descargar plantilla de extras
+          </Button>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -115,13 +137,13 @@ export function FacturasTable({
           <DropdownMenuContent>
             <DropdownMenuItem
               onClick={() =>
-                downloadBillsInExcelFileporLegajo(facturas, month, year)
+                downloadBillsInExcelFileporLegajo(exportSource, month, year)
               }
             >
               Excel (por legajo)
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => downloadBillsInTxtFile(facturas, month, year)}
+              onClick={() => downloadBillsInTxtFile(exportSource, month, year)}
             >
               TXT
             </DropdownMenuItem>
@@ -172,7 +194,8 @@ export function FacturasTable({
                   ? "N/A"
                   : determinarCuota(
                       factura.contracts.fecha_inicio,
-                      factura.contracts.fecha_final
+                      factura.contracts.fecha_final,
+                      referenciaMes
                     )}
               </TableCell>
               <TableCell className="text-right">

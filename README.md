@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Gestión de Cuentas
 
-## Getting Started
+App interna (Next.js + Supabase + shadcn) para liquidar el beneficio telefónico de empleados: usuarios/contratos, facturas mensuales, consumos extras y exportación Excel/TXT.
 
-First, run the development server:
+## Requisitos
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 20+
+- Cuenta Supabase (tier gratuito alcanza)
+- Variables de entorno:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm dev
+pnpm build
+pnpm test
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Flujo de uso
 
-## Learn More
+1. **Cargar usuarios** (`/cargar-usuarios`) — Excel con legajo, CUIL, contrato, etc.
+2. **Ver / renovar contratos** desde `/usuarios`.
+3. **Cargar facturas** (`/cargar-facturas`) — Excel del mes + % impuestos + gestión.
+   - Si el mes ya tiene líneas, **se reemplazan** al confirmar.
+4. **Ver facturas** (`/facturas`) — filtros, extras, export Excel/TXT.
+5. **Consumos extras** (`/consumos`) — catálogo y aplicación por mes (reemplaza extras del mes).
+6. **Administrar datos** (`/resetear-db`) — borrar por mes o tablas (con confirmación).
 
-To learn more about Next.js, take a look at the following resources:
+## Plantillas Excel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Cada pantalla de carga ofrece **Plantilla Excel** con las columnas esperadas.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Usuarios
 
-## Deploy on Vercel
+`Legajo, Cuil, Certificado, Entidad, Fecha (ddmmyyyy), Disponible, Rem mens, Nombre, Apellido, Estado`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Estados: `activo | jubilado | admin | aduana | other`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Facturas
+
+`Nro Linea, Usuario, Legajo, Plan, Monto valor plan, Monto servicios adicionales, Monto bonificaciones, Monto llamadas locales nac, Monto llamdas internacionales, Monto roaming, Monto mensajes, Monto datos, Monto otros cargos , Monto total linea`
+
+### Consumos (catálogo)
+
+`Codigo, Nombre`
+
+### Consumos a aplicar
+
+`Legajo, Codigo, Monto`
+
+## Modelo de datos (Supabase)
+
+`users` → `contracts` → `bills_mensuales` → `bills`  
+               ↘ `bill_extras` ← `extras`
+
+- Contrato **activo**: dura **1 año** (12 cuotas).
+- Liquidación activo: total + extras − excedente (excedente = max(0, total+extras−disponible)).
+
+## Notas
+
+- No hay login: la URL se considera privada del cliente.
+- Las operaciones corren desde el browser con la anon key de Supabase.
+- Al re-cargar facturas de un mes se reemplazan las **líneas**; los extras del mes se mantienen salvo que se vuelva a cargar el Excel de extras.

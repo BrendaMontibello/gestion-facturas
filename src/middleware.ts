@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { updateSession } from "./lib/db/middlewate";
+import { updateSession } from "./lib/db/middleware";
 
 export async function middleware(request: NextRequest) {
   // update user's auth session

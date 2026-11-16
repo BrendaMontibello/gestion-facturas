@@ -1,7 +1,70 @@
-import { FileDown, FileSpreadsheet, Percent, Receipt, Users } from 'lucide-react';
-import Link from 'next/link';
+import {
+  FileDown,
+  FileSpreadsheet,
+  Percent,
+  Receipt,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const sections = [
+  {
+    href: "/cargar-usuarios",
+    title: "Cargar Usuarios",
+    description: "Importar archivo Excel con información de usuarios",
+    detail:
+      "Carga masiva de usuarios y contratos mediante archivo Excel con todos los datos necesarios.",
+    icon: FileSpreadsheet,
+  },
+  {
+    href: "/usuarios",
+    title: "Ver Usuarios",
+    description: "Consultar la base de datos de usuarios",
+    detail:
+      "Visualiza y gestiona la información de todos los usuarios registrados.",
+    icon: Users,
+  },
+  {
+    href: "/cargar-facturas",
+    title: "Cargar Facturas",
+    description: "Importar facturas telefónicas",
+    detail:
+      "Carga los costos telefónicos mensuales. Si el mes ya existe, se reemplazan las líneas.",
+    icon: Receipt,
+  },
+  {
+    href: "/facturas",
+    title: "Ver Facturas",
+    description: "Ver facturas telefónicas",
+    detail:
+      "Consultá liquidaciones del mes, aplicá extras y exportá Excel o TXT.",
+    icon: Receipt,
+  },
+  {
+    href: "/consumos",
+    title: "Gestionar Consumos Extras",
+    description: "Administrar consumos extras para facturas",
+    detail:
+      "Creá y gestioná los códigos de consumo extra aplicables a las facturas.",
+    icon: Percent,
+  },
+  {
+    href: "/resetear-db",
+    title: "Administrar Datos",
+    description: "Borrar mes o tablas con confirmación",
+    detail:
+      "Eliminá facturas de un mes, tablas puntuales o toda la base (con confirmación).",
+    icon: FileDown,
+  },
+];
 
 export default function Home() {
   return (
@@ -11,116 +74,22 @@ export default function Home() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Link href="/cargar-usuarios">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileSpreadsheet className="h-6 w-6" />
-                Cargar Usuarios
-              </CardTitle>
-              <CardDescription>
-                Importar archivo CSV con información de usuarios
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Carga masiva de usuarios mediante archivo CSV con todos los
-                datos necesarios.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/usuarios">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-6 w-6" />
-                Ver Usuarios
-              </CardTitle>
-              <CardDescription>
-                Consultar la base de datos de usuarios
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Visualiza y gestiona la información de todos los usuarios
-                registrados.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/cargar-facturas">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-6 w-6" />
-                Cargar Facturas
-              </CardTitle>
-              <CardDescription>Importar facturas telefónicas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Carga los costos telefónicos mensuales de cada usuario.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/facturas">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-6 w-6" />
-                Ver Facturas
-              </CardTitle>
-              <CardDescription>Ver facturas telefónicas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Ver los costos telefónicos mensuales de cada usuario.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-          <Link href="/consumos">
+        {sections.map(({ href, title, description, detail, icon: Icon }) => (
+          <Link key={href} href={href}>
             <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Percent className="h-6 w-6" />
-                  Gestionar Consumos Extras
+                  <Icon className="h-6 w-6" />
+                  {title}
                 </CardTitle>
-                <CardDescription>
-                  Administrar consumos extras para facturas
-                </CardDescription>
+                <CardDescription>{description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Crea y gestiona los códigos de consumo extra aplicables a las
-                  facturas.
-                </p>
+                <p className="text-sm text-muted-foreground">{detail}</p>
               </CardContent>
             </Card>
           </Link>
-
-        <Link href="/resetear-db">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileDown className="h-6 w-6" />
-                Borrar Datos
-              </CardTitle>
-              <CardDescription>Borrar los usuarios</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Elimina completamente los usuarios de la base de datos.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+        ))}
       </div>
     </div>
   );
